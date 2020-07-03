@@ -1,0 +1,260 @@
+1. 在一个大数组里， 找到指定字符/字符串的下标 
+	a.传统方法：
+		数据轮询一遍，相等就返回index
+		function returnCurIndex (arr, str) {
+			let iIndex = -1;
+			if (!arr) {
+				return -1;
+			}
+			arr.forEach((item, index) => {
+				if (item === str) {
+					iIndex = index;
+				}
+			})
+			return iIndex;
+		}
+		var a = ['aab','ccc','cindy', 'agim', '....', 'aegege'];
+		var index = returnCurIndex(a, 'cindy');
+
+
+	b. 利用原生方法
+		1.先把数组转成字符串，以“，”隔开
+		2.用字符串的，replace()， 把指定的字符/字符串，替换成一个特殊的字符，比如“┢”,
+		3.用replace()，去掉除“，”和“┢”外的所有数组元素，成为这样：,,,,,,,,,,,,,,,,┢,,,,,,,,,
+		4.用string.indexOf(“┢”),找到下标
+
+		如果没有2，3二步替换，字符串是以字符为下标开始，而不是数组的一个word
+		function returnCurIndex (arr, str) {
+			var reg = new RegExp(str);
+			let iIndex = -1;
+			if (!arr) {
+				return -1;
+			}
+			let sArr = arr.toString();
+			console.log('sArr1:', sArr);
+			let sArr2 = sArr.replace(reg,"┢");
+			console.log('sArr2:', sArr2);
+			let sArr3 = sArr2.replace(/[^,┢]/g,"");
+			console.log('sArr3:', sArr3);
+			iIndex = sArr3.indexOf("┢");
+			console.log('iIndex 1:', iIndex);
+			return iIndex;
+		}
+		var a = ['aab','ccc','cindy', 'agim', '....', 'aegege'];
+		var index = returnCurIndex(a, 'cindy');
+
+2. 数组去重：
+	a. 遍历数组
+		a1. 取得当前数组元素
+		a2. 辅助数组exits[当前数组元素] 是否为true,
+				如果是true，则说明这个当前数组元素已有，重复了
+				如果是false,则说明是个新元素，推入res数组里
+	b. 返回res新数组
+
+	针对 arr2的exits为： [ ,true, , true, , , true, true, true, a:true, b:true, c:true]	
+	遍历到a元素时， exits为a:true， 这时它在exits的第0个下标
+	遍历到3时， a:true被移到了4的下标位置， 0，1，2下标都是empty, 3下标为true， 4下标为a:true
+
+	function removeDuplicate(arr){
+		if (arr === null || arr.length < 2) {
+			return arr;
+		};
+		let res = [],exits = [];
+		for(let i = 0; i < arr.length; i++){
+			let j = arr[i];
+			console.log('000:', exits);
+			console.log('111:', exits[j]);
+			// 如果不存在，说明这个数是新的，没重复
+			if( !exits[j] ){
+				res.push(arr[i]);
+				// 把这个属性的元素，标为true,下次再来，就知道此数是已有的了
+				exits[j] = true;
+			}
+		}
+		return res;
+	}
+	var arr1 = [1,3,3,3,1,5,6,7,8,1];
+	var arr2 = ['a','b','c',3,1,'a',6,7,8,1];
+	console.log(removeDuplicate(arr2))
+
+3. 去掉重复的字符：
+	a. 遍历字符串
+		a1. 辅助数组chart中,已经存在当前字符为属性的值时， 把这个属性对应的值 +1
+			如果不存在，则当前字符的属性值为1
+		a2. 遍历辅助数组chart,把它属性值为1的属性， 推入res结果数组里
+	b. 返回结果数组
+
+	chart辅助数组的值为[c:2, i:3, ...]即每个字符出现的次数
+	function delDelicateChart (str) {
+		if (!str || str.length < 2 || typeof str !== 'string') {
+			return str;
+		}
+		let chart = [];
+		let res = [];
+		for (let i = 0, l = str.length; i < l; i++) {
+			let c = str[i];
+			if (chart[c]) {
+				chart[c]++;
+			} else {
+				chart[c] = 1;
+			}
+		}
+		for (let j in chart) {
+			// if (+chart[j] <= 2) {
+			if (chart[j] === 1) {
+				res.push(j);
+			}
+		}
+		console.log('33:', res);
+		return res.join('');
+	}
+	var str = 'cindy miss cindylou';
+	console.log(delDelicateChart(str));
+
+
+4. 合并二个数组，并排序
+	a. 数组排序
+	b. 如果当前a数组元素存在，当前b数组元素不存在，或是当前a数组元素小于当前b数组元素
+		把a的当前元素加入结果数组res里， 当前a数组元素后移一位
+	c.如果是当前b数组元素大，则把当前b数组元素推入res数组里
+	function mergeSortedArrs (arr1, arr2) {
+		if (!arr1 && arr2.length) {
+			return arr2;
+		}
+		if (!arr2 && arr1.length) {
+			return arr1;
+		}
+		if (!arr1 && !arr2) {
+			return [];
+		}
+		arr1.sort((a, b) => a - b);
+		arr2.sort(function(a, b){ 
+			return a - b;
+		});
+		console.log('arr1:', arr1);
+		let eleA = arr1[0], eleB = arr2[0], res = [], i = 1, j = 1;
+		while(eleA || eleB) {
+			if ((eleA && !eleB) || eleA <= eleB) {
+				res.push(eleA);
+				eleA = arr1[i++];
+			} else {
+				res.push(eleB);
+				eleB = arr2[j++];
+			}
+		}
+		return res;
+	} 
+
+	var a = [20, 3, 9, 1, 4];
+	var b = [15, 3, 2, 40];
+	console.log(mergeSortedArrs(a, b));
+
+
+5. 字符串返向
+	function reverseString (str) {
+		if (!str || str.length < 2) {
+			return str;
+		}
+		let res = '';
+		for (let l = str.length, i = l -1; i > 0; i--) {
+			res += str[i]; 
+		}
+		return res;
+	}
+	let str = 'abcdef ghi';
+	console.log(reverseString(str));
+
+
+6. 字符串原位反转：
+	function reverseInPlace(str){
+		return str.split(' ').reverse().join(' ').split('').reverse().join('');
+	}
+	console.log(reverseInPlace('I am the good boy'));
+	//I ma eht doog yob
+
+7. 给定某个数， 在一个无序的数组中，是否有二个数之和等于这个数
+	function sumFind(arr, num) {
+		if (!arr || arr.length < 2) {
+			return false;
+		}
+		let exitDiff = [];
+		for (let i = 0, l = arr.length; i < l; i++) {
+			// 存放9-当前数组元素的差， 如9-6 = 3
+			let sub = num - arr[i];
+			if (exitDiff[sub]) {
+				// 如果exitDiff[3] 已经为true了，说明找到了3
+				return true;
+			} else {
+				// 如果 exitDiff[3]不存放，放了true，进入第一轮循环
+				exitDiff[arr[i]] = true;
+			}
+		}
+		return false;
+	} 
+	let a = [6, 2, 5, 3, 7];
+	let b = [3, 5, 2, 10];
+	console.log('是否有合为9的二个数：', sumFind(b, 9));
+
+8. 连字符转驼峰
+	function changeCamel (str) {
+		if (!str || str.indexOf('-') < 0) {
+			return str;
+		}
+		let arr = str.split('-');
+		for (let i = 1, l = arr.length; i < l; i++) {
+			arr[i] = arr[i].charAt(0).toUpperCase() + arr[i].substr(1);
+		}
+		return arr.join('');
+	}
+	let str = 'cindy-lou-girl';
+	console.log(changeCamel(str));
+
+
+9. 用正则去首尾空格：
+	String.prototype.trim = function () {
+		return this.replace(/(^\s*) | (\s*$)/g, '');
+	}
+	let str = ' cindy is a girl.   ';
+	console.log('1:', str.length);
+	str = str.trim();
+	console.log('2:', str.length);
+
+
+10. 把数字转成RMB三位加逗号
+	function formatRMB(str) {
+		let arr = str.split('');
+		// for从length - 1开始的话，就不用 reverse()一遍了
+		// 如果reverse了，就从0开始
+		// arr = arr.reverse();
+		let res = [];
+		for (let l = arr.length, i = l -1 ; i >= 0; i--) {
+			res.push(arr[i]);
+			if ((i+1)%3 === 0 ) {
+				res.push(',');
+			}
+		}
+		res = res.reverse();
+		res = res.join('');
+		return res;
+	}
+	let s = '12345678';
+	console.log(formatRMB(s));
+
+11. 汉诺塔问题：
+	把A杆上的金盘全部移到C杆上，并仍保持原有顺序叠好。操作规则：每次只能移动一个盘子，并且在移动过程中三根杆上都始终保持大盘在下，小盘在上，操作过程中盘子可以置于A、B、C任一杆上。
+
+	function hanoiProcess (n, from, to ,help) {
+		if (n < 1) {
+			return;
+		}
+		if (n === 1) {
+			console.log('Move 1 from ' + from + 'to ' + to);
+		} else {
+			// 前n-1个从from移动到help上，可借助to
+			hanoiProcess(n-1, from, help, to);
+			console.log('Move ' + n + ' from ' + from + 'to ' + to);
+			// 再把n-1从help移到to,可借助from
+			hanoiProcess(n-1, help, to, from);
+		}
+	}
+	hanoiProcess(3, "左", "右", "中");

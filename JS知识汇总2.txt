@@ -1,0 +1,428 @@
+1. JS数据类型：
+	5种基数类型：string, number, boolean, null, undefined
+	引用类型： array, object, function, regex等
+	ES6新增类型：symbol, 类字符串，产生的string属性名是不同的
+				 map: 允许对象的key,可以是对象
+				 set： 没有重复数据的数组
+
+2. typeof instanceof
+	typeof 对象类，如null, object, array 都是object
+	null instanceof null 会报错
+
+
+3. this：指向函数运行时所在的对象
+	普通函数： 谁调用它，它就指向谁，一般全局对象
+	构造函数： new ..(), 指向对象实例
+				..(),没用new， 指向全局
+	匿名函数： 指向全局
+	call, apply, bind: 指向指定的对象 
+
+	ES6中的箭头函数：函数中没有this:this指向函数定义时所在的对象
+					 没有arguments, caller等： const a = (...c) => {console.log(c)} 
+					 函数不能被new
+
+4. 深拷贝，浅拷贝
+	浅拷贝是拷贝一层，深层次的对象级别的就拷贝引用,除了对象是拷贝的引用类型，其他都是直接将值传递，有自己的内存空间的。
+	var sourceObj = {
+		a: 'cindy',
+		b: [1,2,3],
+		c: {
+			a: 'lou',
+			age: 30
+		}
+	};
+	var targetObj = Object.assign({}, sourceObj);
+	targetObj.c.a = 'cindy.lou';
+	console.log(sourceObj);  // sourceObj里的c已经被改了
+
+	Object.assign()就是一种浅拷贝
+
+	深拷贝是拷贝多层，每一级别的数据都会拷贝出来；遍历递归
+		function deepCopyTwo(obj) {
+		    let objClone = Array.isArray(obj) ? [] : {};
+		    if (obj && typeof obj == 'object') {
+		        for (const key in obj) {
+		            //判断obj子元素是否为对象，如果是，递归复制
+		            if (obj[key] && typeof obj[key] === "object") {
+		                objClone[key] = deepCopyTwo(obj[key]);
+		            } else {
+		                //如果不是，简单复制
+		                objClone[key] = obj[key];
+		            }
+		        }
+		    }
+		    return objClone;
+		}
+
+	JSON.sringify(obj)是一种深拷贝，再转成obj
+		function deepCopy(source) {
+			return JSON.parse(JSON.stringify(source));
+		}
+
+5. 继承
+	ES3：原型链+ 构造函数继承
+		 function A(color) {
+		 	this.color = color;
+		 }
+		 A.prototype.say = function () {
+		 	console.log(this.color);
+		 }
+		 function B (color, name) {
+		 	A.call(this, color);
+		 	this.name = name;
+		 }
+		 B.prototype = new A();
+		 B.prototype.go = function (){
+		 	console.log(this.name);
+		 }
+		 var b = new B('red', 'flower');
+		 b.say();
+		 b.go();
+		 会造成某些属性的浪费， 有二次原型挂载
+	ES5：Object.create()
+	ES6： Class 和 extends
+		class A{
+			constructor(name) {
+				this.name = name;
+			}
+			say () {
+				console.log(this.name);
+			}
+			static hello () {
+				console.log(this.name + ' hello');
+			}
+		}
+
+		class B extends A{
+			constructor (name, color) {
+				super(name);
+				this.color = color;
+			}
+			go () {
+				console.log(this.color);
+			}
+			static hello () {
+				super.hello();
+			}
+		}
+		let b = new B('cindy', 'red');
+		b.say();
+		b.go();
+		B.hello();
+					
+6. new 构造函数()做了什么？
+	a. 生成一个空对象 
+	b. 新空对象的__proto__指向函数的prototype，新空对象的constructor指向函数的constructor
+	c. 用空对象去调用构造函数，即将this指向该 空对象
+	d. 返回此空对象
+	let a = new A();
+		var obj = {};
+		obj.__proto__ = A.prototype
+		A.call(obj)
+		return obj
+
+7. 作用域，闭包
+	函数运行时的上下文， 全局作用域，局部作用域
+	闭包：函数内部 调用 函数外部变量， 函数运行结束后，变更不被释放。
+	最大的作用是：创建了一个不被释放的，不会被污染的变量
+
+
+8. JSONP原理， 优缺点：
+
+9. 手写一个Promise:
+
+
+10. JS的事件轮询机制
+	异步操作推入任务队列：
+		onclick类：由浏览器内核的 DOM Binding 模块来处理，
+				   当事件触发的时候，回调函数会立即添加到任务队列中。
+		setTimeout:由浏览器内核的 timer 模块来进行延时处理，
+				   当时间到达的时候，才会将回调函数添加到任务队列中
+		ajax: 由浏览器内核的 network 模块来处理，
+			  在网络请求完成返回之后，才将回调添加到任务队列中。
+	JS的运行机制：
+		1. 所有同步任务，都在一个主线程上执行，形成一个执行栈
+		2. 主线程之外，还有一个任务队列，所有异步执行有了运行结果后，就在任务队列里放置一个事件
+		3. 所有执行栈的同步任务执行完毕，就去执行任务队列的事件。那些对应的异步任务，就结束等待，进入执行
+		4. 主线程不断循环执行上面三步
+	任务队列推入的优先级：
+		任务又分：macro-task（宏任务）和micro-task（微任务）
+		macro-task：script（整体代码）,setTimeout,setInterval,setImmediate,I/O,UI rendering;
+		micro-task：process.nextTick,Promise,Object.observe(已废弃),MutationObserver(html5新特性)
+
+		优先级的话，micro-task > macro-task；
+		micro-task中：process.nextTick > Promise.then
+		macro-task中：setTimeout > setImmediate
+
+11.ES6的genertor 生成器，控制流库
+
+12. 我们前后端分离框架做了什么？
+	基于egg.js+webpack做了大前端
+	egg.js: 可高扩展的插件机制，一个插件只做一件事
+			约定优于配置，整组人员按照一套统一的约定进行扩展开发，
+				如：在controller文件+下，
+			内置多线程
+
+Vue:
+1. 数据传递：
+	父-->子: props
+	子-->父： 
+			方法1：props里的事件函数
+				子： <input @input="inputHandle" ..../>
+					methods: {
+						inputHandle () {
+							this.$emit('emitFromChild', msg);
+						}
+					}
+				父：
+					<child @emitFromChild="emitFn" .../>
+					methods: {
+						emitFn (msg) {
+							this.msg = msg
+						}
+					}
+			方法2： 借助router, 
+					往$router.push({params:{},query:{}})
+					在router指定的页面的create里， 获取this.$router.query
+			方法3：全局bus, 即一个全局Vue实例，一个项目只能一个
+					在A页面， created() {bus.$on('fn')},
+								methods: {
+									fn (args) {..}
+								}
+					在B页面， methods:{
+								.. () {
+									bus.$emit('fn', args);
+								}
+					}
+			方法4： Vuex
+
+2. computed 和 watch的区别：
+	computed：
+		是计算属性值，类似过滤器，可以有get,set。
+		把view里复杂的计算，放到computed里
+		computed计算返回的属性值，不能在data里定义
+		它有缓存性
+	watch：
+		是监听，观察动作，监听已有的data, props和computed属性值。
+		可监听对象单个值：
+			data () {
+				return {
+					obj: {
+						name: ''
+					}
+				}
+			},
+			watch: {
+				obj.name: function(old,new) {
+
+				}
+			}
+		可监听computed计算出来的属性：
+			data () {
+				return {
+					obj: {
+						name: ''
+					}
+				}
+			},
+			computed: {
+				fullName () {
+					retrun this.obj.name + ' last';
+				}
+			},
+			watch: {
+				fullName () {
+
+				}
+			}
+
+3. computed和watch的实现原理
+
+
+4. data到dom, dom到data双向绑定原理
+
+
+5. nextTick原理 
+
+
+6. keep-alive作用，及原理 
+
+
+7. Vue插件系统：
+	自定义组件：
+		jgg.js里
+			import Jgg from './jgg.vue';
+			Jgg.install = function (Vue) {
+				Vue.component(Jgg.name, Jgg);
+				...
+			}
+			export default Jgg;
+		在其它地方
+			jgg from '.../jgg.js';
+			Vue.use(jgg);
+
+		Vue.use源码中
+			1. 判断自定义plugin是否注册：
+				内部有个this._installedPlugins数组来记录已挂载的组件
+			2. 从第二个参数开始，做为参数，第一个参数是把Vue unshift进去
+			3. 如果plugin上有install，就运行，
+				没有install，就调用 plugin.call()
+				if (typeof plugin.install === 'function') {
+      				plugin.install.apply(plugin, args)
+    			} else if (typeof plugin === 'function') {
+      				plugin.apply(null, args)
+    			}
+    		Vue.use(plugin), plugin必须是function 或object
+
+    		export function initUse (Vue: GlobalAPI) {
+    			// use传入的参数，要么fn， 要么obj
+  				Vue.use = function (plugin: Function | Object) {
+    				// 判断plugin是否已注册
+    				const installedPlugins = (this._installedPlugins || (this._installedPlugins = []))
+    				if (installedPlugins.indexOf(plugin) > -1) {
+      					return this
+    				}
+
+    				// 取出第二个参数后面的参数
+    				const args = toArray(arguments, 1)
+    				// 第一个参数为Vue
+    				args.unshift(this)
+    				if (typeof plugin.install === 'function') {
+    					// 有plugin.install就调用
+      					plugin.install.apply(plugin, args)
+    				} else if (typeof plugin === 'function') {
+    					// 没有就直接 调用 plugin
+      					plugin.apply(null, args)
+    				}
+    				// plugin加载成功，写入全局的已挂载数组里
+    				installedPlugins.push(plugin)
+    				return this
+  				}
+			}
+
+node:
+1. node搭建开发环境 
+2. egg.js + koa
+3. node + express， 中间件
+	Express 是一个保持最小规模的灵活的 Node.js Web 应用程序开发框架，为 Web 和移动应用程序提供一组强大的功能。
+	在开发环境中， 借助express来起server
+	express的中间件：
+		一个请求，发到服务器，经历：收到请求request，处理请求,返回处理response。
+		在express内部，会执行一系列函数组，在服务器发出响应之前，即response前， 要执行完这一系列函数组。
+		这一系列函数组，就是通过app.use(fn)推入进来的，执行完一个fn就执行next调用下一个函数,直到没见有函数为止。
+		如：
+			function middlewareA(req, res, next) {
+    			console.log('middlewareA before next()1');
+    			next();
+   	 			console.log('middlewareA after next()2');
+			}
+
+			function middlewareB(req, res, next) {
+   				console.log('middlewareB before next()3');
+			    next();
+			    console.log('middlewareB after next()4');
+			}
+
+			function middlewareC(req, res, next) {
+			    console.log('middlewareC before next()5');
+			    next();
+			    console.log('middlewareC after next()6');
+			}
+
+			app.use(middlewareA);
+			app.use(middlewareB);
+			app.use(middlewareC);
+			// 它的顺序是 
+			135642  先进后出，
+
+	可挂载中间件的方法有：
+		目前可以挂载中间件进去的有：(http请求方法，诸如Get/Post/Put等等)
+		app.use
+		app.[HTTP Method]
+		app.all
+		app.param
+		router.all
+		router.use
+		router.param
+		router.[HTTP Method]
+	挂载最终是二种方法：
+		a. 使用app.use、router.use来挂载的
+			app.use经过一系列处理之后最终也是调用router.use的
+		b. 使用app.all、app.[Http Method]、app.route、router.all、router.[Http Method]、router.route来挂载的
+			经过一系列处理之后最终也是调用router.route的
+		所以最终是router.use 和 router.route方法里，挂载了中间件
+
+	express的常用功能：
+		1. 整个应用生命周期中共享的配置和数据对象：
+			如服务URL、是否启用某个功能特性、接口配置、当前登录用户数据
+			app.set('enableCache', true);
+			app.get('enableCach');
+
+			app.disable('cache');
+			app.locals.user = {name: 'cindy'}
+		2. HTTP Request:
+			处理请求参数，cookie, 请求头信息
+		3. router
+			收到客户端的请求，服务需要通过识别请求的方法（GET, POST, PUT...）和请求的具体路径(path)来进行不同的处理，即请求的分发，分发到不同的回调里处理
+			app.get()只传一个参数，就是用于获取项目配置
+					 传二个参数，就作为路由处理。
+			app.use('*', cb) 与app.all('*', cb)：前者是中间件使用，有顺序，不一定调用的到。 后者是路由方式，肯定会执行
+		4. 视图view
+			自身集成了视图功能，提供了consolidate.js功能
+			app.set('view', __dirname + '\templates');
+			app.set('view engine', 'html');
+			引擎渲染，支持jage和ejs.
+			app.engine(ext, callback);
+			app.engin('html', require('ejs').renderFile)
+		5. 返回response
+			res
+			res.render()
+			res.jsonp()
+			res.send()
+			res.status(200)
+		6. 中间件
+4. redis缓存:
+	是一个key-value的存储系统，它支持的value 有五种数据类型：string，hash，list，set及zset(sorted set)。
+	它支持多种语言的API
+
+5. express, koa的区别
+	a.express: 内置了router, view(view enginer),
+	  koa:移除了这些内置，可扩展相应插件
+	b.express: 使用callback
+	  koa: 使用promise,generator,处理异步，
+	  		但逻辑多了，promise..then..then,也是个坑
+
+	Express主要基于Connect中间件框架，功能丰富，随取随用，并且框架自身封装了大量便利的功能，比如路由、视图处理等等。
+	koa主要基于co中间件框架（2.0已经用ES7的generator替换了），框架自身并没集成太多功能，大部分功能需要用户自行require中间件去解决，但是由于其基于ES6 generator特性的中间件机制，解决了长期诟病的“callback hell”和麻烦的错误处理的问题，大受开发者欢迎。
+
+	1. 语法区别
+		experss 异步使用 回调
+		koa1 异步使用 generator + yeild
+		koa2 异步使用 await/async
+
+	2. 中间件区别
+		koa采用洋葱模型，进行顺序执行，出去反向执行，支持context传递数据
+		express本身无洋葱模型，需要引入插件，不支持context
+		express的中间件中执行异步函数，执行顺序不会按照洋葱模型，异步的执行结果有可能被放到最后，response之前。
+		这是由于，其中间件执行机制，递归回调中没有等待中间件中的异步函数执行完毕，就是没有await中间件异步函数
+
+	3. 集成度区别
+		express 内置了很多中间件，集成度高，使用省心，
+		koa 轻量简洁，容易定制
+
+1. 什么时错误优先
+	nodejs里的callback里， 第一个参数，总是错误处理函数，后面才是一引起数据参数
+2. 如何避免回调地狱
+	可以有promise， 流程处理器
+3. 用node写一个sleep函数
+	function sleep(milliSeconds) { 
+	    var startTime = new Date().getTime(); 
+	    while (new Date().getTime() < startTime + milliSeconds);
+	};
+	console.log('1:',new Date());
+	sleep(10000); 
+	console.log('2:',new Date());
+4. require的模块加载机制
+	https://www.jb51.net/article/171511.htm
+
+

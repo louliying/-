@@ -1,0 +1,29 @@
+框架一： 前后端分离框架
+1. 基于Vue, egg.js, wepack搭建的前后端分离框架；
+2. 一套controller层，对接PC，H5二套 View层；
+3. 支持服务端渲染，客户端渲染。 支持客户端单页面多应用；
+4. API接口层配置，统一过滤一遍客户端异步请求数据；
+5. egg多线程使用，启动app.js时读取一次UCM环境变更配置；
+6. nodejs对接kafaka日志系统，针对ERROR, Info级别日志上报；
+7. 一键式创建项目: 项目内包含合理的eslint规范，基础sass配置及mixin, px和rem互转，客户端异步接口统一proxy；
+8. node，webpack按规则打静态资源包，server包，配合docker部署；
+
+
+框架二： 大促组件框架
+1. 以npm包形式，基于Vue,开发大促业务组件（红包雨，大转盘，九宫格等）；
+2. 支持一次引入使用全部组件，也支持单个组件引入使用；
+3. npm支持服务端渲染，亦可客户端渲染；
+
+
+自我评价：
+1.	8年多的Web前后端开发经验。专注于前端开发，有3年多前端架构、前端管理经验；
+2.	精通Vue框架及框架底层源码，熟悉React，angular等主流框架；
+	熟练Nodejs+express, egg.js+koa构建web工程,写过多个npm包；
+	熟练grunt、gulp、 webpack等前端自动化构建；
+	精通微信小程序开发，百度小程序等Uniapp开发；
+	熟悉bable, typescript等预编译库，能够灵活运用并有实践经验；
+	有flutter项目实践；	
+3.	阅读过jQuery、Zepto、Underscore等类库源码；
+4.	喜欢研究前端新技术，追求前端性能优化及代码质量； 
+5.	曾进修上海外国语大学英语专业(4年)； 
+6.  有项目管理知识：PMP5A通过；

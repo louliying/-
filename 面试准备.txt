@@ -1,0 +1,54 @@
+1. webpack:
+   分包
+   预加载
+   按需加载
+   运行时间
+
+   webpack的runtime和mainifest:
+   		runtime：在浏览器运行过程中，webpack用来连接模块化应用程序所需的所有代码。
+   		包含：模块交互时，连接模块所需的加载和解析逻辑，
+   		包含：已经加载到浏览器中的连接模块逻辑，及尚未加载模块的延迟加载逻辑
+   		manifest: 当compiler开始执行，解析和映射应用程序时，它会保留所有模块的详情要点。它是一个数据集合。
+   		当完成打包并发送到浏览器昌， runtime会通过manifest来解析和加载模块。
+   		通过使用manifest中的数据，runtime将能够检索这些标识，找出每个标识符背后对应的模块。
+
+   		浏览器缓存和它有关系。
+   		If the hashes webpack generates change, then the manifest changes as well。
+   		
+
+
+
+
+2. 算法：数组的查询
+	快查
+	topk
+
+
+3.  ES6：
+	promise
+
+
+
+4. JS
+	原型链
+	作用域
+
+
+
+5. Vue
+	data 到dom  的立即响应
+	dom 到data的响应
+	父子间数据通信
+
+6. react
+	父子通信 
+	state prop
+
+
+7. 管理可能 问的问题
+
+
+
+8. 微前端
+
+

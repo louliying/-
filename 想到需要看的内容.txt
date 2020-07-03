@@ -1,0 +1,176 @@
+1. webpack中的 bundle-loader: 用于延迟加载的bundle
+	https://webpack.docschina.org/loaders/bundle-loader
+	详情看webpack.txt及demo
+
+2. Vue3的新特性
+
+3. npm run dev 时， 生成的js css 都在哪里， dist文件+下反正 是没有
+	vue-cli webpack项目中：
+		在config/index.js中，assetsSubDirectory 和 
+		assetsPublicPath ,
+
+		assetsPublicPath：在webpack.base.conf.js里有用到这个变量：
+		...
+		output: {
+	    	path: config.build.assetsRoot,
+	    	filename: '[name].js',
+	    	publicPath: process.env.NODE_ENV === 'production' ?
+	      		config.build.assetsPublicPath :
+	      		config.dev.assetsPublicPath
+	  	}
+	  		publicPath, 代表生成的index.html文件，里面引入资源时，路径前面要加上 publicPath指定的前缀。
+
+	  	assetsSubDirectory: 
+	  	a. 在dev-server.js中有用到：
+	  		dev-server.js是在npm run dev时运行的
+	  		app.use(staticPath, express.static('./static'))
+	  	b. 在webpack.base.conf.js的loader中：
+	  		name: utils.assetsPath('img/[name].[hash:7].[ext]')
+	  		assetsSubDirectory: 把所有的静态资源打包到 dist下的 static文件夹下
+	  		在运行npm run dev时， 把./static当成静态资源路径
+
+4. vue-cli生成项目里static和asset文件+都放img，有什么区别
+	从上面那题得知， static里的img，是被webpack打包至dist的
+	asset是不会的，如果需要，则自己手动配置下  
+
+5. node 三种路径区别
+	path  resolve, __dirname , __filename
+	5.1. __dirname: 动态获取当前文件+的绝对路径 
+			//  /Users/wcq/Documents/reactdemo/
+			console.log(__dirname)
+	5.2. __filename: 动态获取当前文件的绝对路径
+			// /Users/wcq/Documents/reactdemo/main.js  
+			console.log(__filename)
+	5.3. path.join(path1, path2): 
+		连接路径 ， 会使用当前操作系统的路径分隔符， window下“”，Unix下“/”
+		// /Users/wcq/Documents/reactdemo/file/index.html
+		path.join(__dirname,'/file/index.html');
+		// /Users/wcq/Documents/reactdemo/file/index.html
+		path.join(__dirname,'./file/index.html');
+	5.4. path.resolve([from...], to)
+		将 to 参数解析为绝对路径
+		给定的路径顺序，是从右往左被处理，后面的每个path被依次解析，直到构造完成一个绝对路径
+		// /file/index.html
+		path.resolve(__dirname,'/file/index.html'); 
+		// /Users/wcq/Documents/reactdemo/file/index.html 
+		path.resolve(__dirname,'./file/index.html');
+		// /aa/bb/cc
+		path.resolve('/aa/bb','./cc');
+		// /cc
+		path.resolve('/aa/bb','/cc');
+
+
+6. npm install --save-dev ... 和 --save ...二者有什么区别
+	--save 等同于 -S:
+		把模块安装到项目中，并添加到package.jsonk中的depependencies属性中
+		npm install是会自动安装模块到node_modules中
+		depependencies中的模块，是指生产生环境需要的包
+	--save-dev 等同于 -D：
+		把模块安装到项目中，并添加到package.jsonk中的devDepependencies属性中
+		npm install是会自动安装模块到node_modules中
+		devDepependencies中的模块，是指开发、测试环境需要的包
+	npm install xxx:
+		安装模块到项目目录下，不会将模块依赖写入devDependencies或dependencies。
+	npm instal xxx -g:
+		将模块安装到全局，具体安装到磁盘哪个位置，要看 npm cinfig prefix的位置
+
+2. Vue3的新特性
+	写一个vue3的项目
+
+7. 手写egg.js的项目
+	前后端一起写
+
+8. react项目写完
+
+9. ES6 异步操作
+
+10. Vue组件按需要，异步加载 ，组件缓存
+	懒加载也叫延迟加载，即在需要的时候进行加载，随用随载。
+
+	组件的懒加载/按需加载， 有三种方法：
+		1. es6  = () =>import('../../xx')
+		2. vue异步  = resolve => require(['../../xx'], resolve)
+		3. webpackrequire.ensure r => require.ensure([], () => r(require('../components/Hello')), 'demo')
+	使用的地方有：
+		1. 调用组件的地方：
+			如在A.vue里：
+				import Todo from './src/components/todo';
+
+				可以在用户点击时，再用上面的三种方法中的一种去加载Todo组件。
+				components: { 
+			        toDo: resolve => {require(['../../component/todo/todo.vue'], resolve)},//懒加载
+			 
+			        //toDo: () => import('../../component/todo/todo.vue')
+			    }
+		2. 全局注册异步组件加载：
+			可以在main.js
+			Vue.component('mideaHeader', () => { 
+    			System.import('./component/header/header.vue')
+    		});			 
+
+		3. 在vue-router的配置中，这也称为路由懒加载
+			如在router/index.js中
+			在new Router({})实例化路由于时
+			在vue-router的实例化时, 对component进行配置
+			{
+				path: '/index.htm',
+				name: 'Index',
+				component: {
+
+				}
+			}
+			方法一：require,组件的异步按需加载
+				component: resolve => require(['@/components/home'],resolve) 
+			方法二：webpack 的 require.ensure() 
+				component: resolve => require.ensure([], () => resolve(require('@/components/home')), 'chunk') 
+
+				改进下，可以在组件加载前加loading:
+				component (resolve) {
+					显示loading
+					require.ensure([], ()=> {
+						resolve(require('@...'))
+					}, 'chunkname');
+					隐藏loding
+				}
+
+				require.ensure(dependencies: String[], callback: function([require]), [chunkName: String])
+
+			方法三： ES6的import
+			 component: ()=> import(/* webpackChunkName: "home" */ '@/components/page/home/index').then(m => m.default)
+
+	多次加载同一个组件时：
+		1. 多次进入同一个异步加载组件：
+			按需加载，浏览器在运行到时，会去请求相应js， 然后进行缓存，多次进入同一个异步组件，会直接取缓存。
+		2. 二个不同页，调用 同一个异步加载组件时：
+			如果是A,B二个地方使用同一个异步加载的组件，也是会取缓存。
+		3. 二个页面，同一个组件，A用了同步加载，B用了异步加载
+			A： 
+				component: {
+					toDo
+				} 
+			B. 
+				components: {
+					toDo: resolve...
+				}
+			这时，toDo会被加载 二次， 因为A的打包代码里嵌入了toDo, B里，toDo是单独打包的。
+
+11. 路由按需，组件按需加载的方案选择：
+	1、二者全都使用懒加载
+　　优点：（1）最大化的实现随用随载
+　　　　　（2）团队开发不会因为沟通问题造成资源的重复浪费
+　　缺点：（1）一个页面中嵌套多个组件时将发送多次的http请求，可能会造成网页显示过慢且渲染参差不齐的问题
+
+　　2、路由页面使用懒加载，而路由页面中的组件按需进行懒加载, 即如果组件不大且使用不太频繁, 直接在路由页面中导入组件, 如果组件使用较为频繁使用懒加载
+　　优点：（1）能够减少页面中的http请求，页面显示效果好
+　　缺点：（2）需要团队事先交流，在框架中分别建立懒加载组件与非懒加载组件文件夹
+
+　　3、路由页面使用懒加载，在不特别影响首页显示延迟的情况下，根页面合理导入复用组件，再结合方案2
+		其实就是2中，对于首页，有些组件是直接同步加载了
+　　优点：（1）合理解决首页延迟显示问题
+　　　　　（2）能够最大化的减少http请求，且做其他他路由界面的显示效果最佳
+　　缺点：（1）还是需要团队交流，建立合理区分各种加载方式的组件文件夹
+
+
+11. 微前端
+
+12. 小程序框架源码

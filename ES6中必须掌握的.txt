@@ -1,0 +1,851 @@
+1. promise
+
+2. generator
+
+3. await
+
+4. 变量的解析赋值
+	解构： 按一定模式，从对象或数组中取值，对变量进行赋值。
+	1. 数组解构：
+		1-1.模式匹配：
+			等号两边的模式相同，左边的变量就会被赋予对应的值
+			let [foo, [[bar], baz]] = [1, [[2], 3]];
+			foo // 1
+			bar // 2
+			baz // 3
+
+			let [head, ...tail] = [1, 2, 3, 4];
+			head // 1
+			tail // [2, 3, 4]
+
+			let [x, y, ...z] = ['a'];
+			x // "a"
+			y // undefined
+			z // []
+			解构不成功，变量的值就是undefined
+		1-2. 不完全解构：
+			等号左边的模式，只匹配一部分的等号右边的数组， 依然可解构成功。
+			let [a, [b], d] = [1, [2, 3], 4];
+			a // 1
+			b // 2
+			d // 4
+		1-3. 报错：
+			等号的右边不是数组（或者严格地说，不是可遍历的结构)
+		1-4. 适合：
+			var let const的变量赋值
+		1-5. new Set也可被用于解构：
+			let [x, y, z] = new Set(["a", "b", "c"]);
+			x // "a"
+		1-6. 默认值：
+			只有变量对象，严格等于undefined时， 默认值才会生效
+			var [a = 1] = [undefined]
+			// a = 1 默认值生效了
+
+			var [x = 1] = [null];
+			x // null  值！== undefined
+
+			默认值可以引用解构赋值的其他变量，但该变量必须已经声明
+			let [x = 1, y = x] = [];     // x=1; y=1
+			let [x = 1, y = x] = [2];    // x=2; y=2
+			let [x = 1, y = x] = [1, 2]; // x=1; y=2
+			let [x = y, y = 1] = [];     // ReferenceError
+	2. 对象解构：
+		数组的元素是按次序排列的，变量的取值由它的位置决定；
+		对象的属性没有次序，变量必须与属性同名，才能取到正确的值
+		2-1: 变量名与属性名相同：
+			var {bar, foo, baz} = { foo: "aaa", bar: "bbb" };
+			// foo = aaa,  bar = bbb, baz = undefined
+		2-2： 变量名与属性名不相同：
+			var { foo: baz } = { foo: 'aaa', bar: 'bbb' };
+			baz // "aaa"
+		2-3：对象解构内部机制：
+			先找到同名属性，再赋给对应的变量。
+			真正被赋值的是后者
+			var { foo: baz } = { foo: "aaa", bar: "bbb" };
+			// baz = 'aaa'
+			// foo foo is not defined
+			1. 找到同名属性  foo:'aaa'   foo是匹配模式
+			2. 再赋值给对应的变量
+				对应的变量baz， 赋值： baz='aaa'
+				baz才是变量
+		2-4：对象解构，变量的声明和赋值是一体的，注意多次申明
+			let foo;
+			let {foo} = {foo: 1}
+			这里就多次声明了，就会被错了
+			let const不能重声明，var可以。
+
+			let foo;
+			({foo} = {foo: 1});
+			这样就能解构成功，不报错，因为()是个代码块，而不是赋值语句。
+			foo = 1 了
+	3. 字符串的解构赋值
+		字符串是个类数组
+		const [a, b, c, d, e] = 'hello';
+		// a: h
+		// b: e
+		// c: l
+		....
+
+
+		let {length : len} = 'hello';
+		len // 5
+	4. 解构原则：
+		解构赋值的规则是，只要等号右边的值不是对象，就先将其转为对象
+		let {toString: s} = 123;
+		s 为number对象上的toString()
+		先把123，转为对象
+	5. 函数参数的解构赋值
+		function move({x = 0, y = 0} = {}) {
+  			return [x, y];
+		}
+
+		move({x: 3, y: 8}); // [3, 8]
+		move({x: 3}); // [3, 0]
+		move({}); // [0, 0]
+		move(); // [0, 0]
+	6. 解构的用途：
+		6-1：交换变量的值：
+			[x, y] = [y, x];
+		6-2: 函数返回多个值
+			function example() {
+  				return {
+    				foo: 1,
+    				bar: 2
+  				};
+			}
+			var { foo, bar } = example();
+		6-3：函数参数的定义 
+			// 参数是一组有次序的值
+			function f([x, y, z]) { ... }
+			f([1, 2, 3]);
+		6-4：提取JSON数据(这个很常用)：
+			var jsonData = {
+  				id: 42,
+  				status: "OK",
+  				data: [867, 5309]
+			};
+			let { id, status, data: number } = jsonData;
+		6-5：函数参数的默认值：
+			jQuery.ajax = function (url, {
+  				async = true,
+ 				beforeSend = function () {},
+  				...
+			}) {
+  				// ... do stuff
+			};
+		6-6: 遍历Map结构
+			for (let [key, value] of map) {
+  				console.log(key + " is " + value);
+			}
+			// 获取键名
+			for (let [key] of map) {
+			// 获取键值
+			for (let [,value] of map) {
+		6-7： 输入模块的指定方法
+			加载模块时，指定输入模块的哪些方法
+			const { SourceMapConsumer, SourceNode } = require("source-map");
+5. 函数的rest参数
+	rest参数（形式为“...变量名”），用于获取函数的多余参数
+	5-1:...后面，跟的是一个数组，将多余的参数放入数组中
+		function add(...values) {
+			// values是一个数组，将多余的参数放入values中
+	  		let sum = 0;
+	  		for (var val of values) {
+	    		sum += val;
+	  		}
+	  		return sum;
+		}
+		add(2, 5, 3) // 10
+
+		const sortNumbers = (...numbers) => numbers.sort();
+		var arr = sortNumbers(9,4,7,2);
+		// arr = [2, 4, 7, 9]
+		等同于ES5：
+			fuction sortNumbers () {
+				return Array.prototype.slice.call(arguments).sort();
+			}
+	5-2: rest参数之后不能再有其他参数（即只能是最后一个参数），否则会报错
+6. 扩展运算符：
+	扩展运算符（spread）是三个点（...）
+	它好比rest参数的逆运算，将一个数组转为用逗号分隔的参数序列。 序列
+	说明：
+		a. ...后面跟的是个数组
+		b. ...arr  返回的是 arr1 arr2 arr3 序列
+	console.log(...[1, 2, 3])
+	// 1 2 3
+
+	console.log(1, ...[2, 3, 4], 5)
+	// 1 2 3 4 5
+	6-1: 主要用于函数调用：
+		function push(array, ...items) {
+  			array.push(...items);
+  			// array.push(items[0] items[1]等)
+		}
+		function add(x, y) {
+  			return x + y;
+		}
+		var numbers = [4, 38];
+		add(...numbers) // 42
+		// add(4, 38)
+	6-2: 扩展运算符和正常函数，可混合使用
+		function f(v, w, x, y, z) { }
+		var args = [0, 1];
+		f(-1, ...args, 2, ...[3]);
+	6-3：代替数组的apply()方法
+		function f(x, y, z) {
+  			// ...
+		}
+		var args = [0, 1, 2];
+		f(...args);
+		// es5的话
+		// f.apply(null, args)
+
+		var arr1 = [0, 1, 2];
+		var arr2 = [3, 4, 5];
+		arr1.push(...arr2);   // arr1.push(3,4,5)
+		// es5写法
+		Array.prototype.push.apply(arr1, arr2);
+	6-4: 应用：
+		a. 合并数组：
+			[1, 2, ...more]   // es5 [1, 2].concat(more)
+			[...arr1, ...arr2, ...arr3]	// es5 arr1.concat(arr2, arr3)
+		b. 与解构赋值结合
+			[a, ...rest] = list   
+			//es5 a = list[0]  rest = list.slice(1)
+			
+			const [first, ...rest] = [1, 2, 3, 4, 5];
+			first // 1
+			rest  // [2, 3, 4, 5]
+
+			const [first, ...rest] = [];
+			first // undefined
+			rest  // []:
+
+			将扩展运算符用于数组赋值，只能放在参数的最后一位，否则会报错。
+			const [...butLast, last] = [1, 2, 3, 4, 5]; 报错
+		c. 函数的返回值 
+			JavaScript的函数只能返回一个值，如果需要返回多个值，只能返回数组或对象。
+			扩展运算符可返回多个值 
+			var d = new Date(...dateFields);
+		d. 将字符串转为数组
+			[...'hello']
+			// [ "h", "e", "l", "l", "o" ]
+		e. 实现了Iterator接口的对象
+			任何Iterator接口的对象，都可以用扩展运算符转为真正的数组。
+			var nodeList = document.querySelectorAll('div');
+			var array = [...nodeList];
+
+7. symbol
+	7-1: 一种新的JS基础类型，表示独一无二的值。
+		JS七种数据类型： Undefined, Null, Boolean, String, Number, Object, Symbol
+		用字符串型 做为对象属性，很容易重名，但用Symbol就不会出现对象属性重名。
+		var s = Symbole();
+		不需要new的，它是基础类型，不是对象， 所以s没有属性， 它是一种类似于String的类型。
+		
+	7-2: Symbol函数的参数只是表示对当前 Symbol 值的描述
+		var s1 = Symbol('foo');
+		s1 // Symbole('foo')
+		s1.toString() // "Symbol(foo)"
+
+		相同参数的二个symbol变量，也是不相等的
+		var s1 = Symbol();
+		var s2 = Symbol();
+		s1 === s2 // false
+	7-3：symbol值不能与其它类型的值进行运算，会报错。
+		var sym = Symbol('My symbol');
+		"your symbol is " + sym   //TypeError: can't convert symbol to string
+	7-4: symbol值可以转成字符串，布尔值
+		symbole值不能转为数值 
+		var sym = Symbol('My symbol');
+		String(sym) // 'Symbol(My symbol)'
+		sym.toString() // 'Symbol(My symbol)'
+
+		var sym = Symbol();
+		Boolean(sym) // true
+		!sym  // false
+	7-5：symbole作为属性名
+		var mySymbol = Symbol();
+		a. 方法一：
+			var mySymbol = Symbol();
+			var a = {};
+			a[mySymbol] = 'Hello!';
+		b. 方法二：
+			var a = {
+				[mySymbol] = 'Hello'
+			};
+		c. 方法三：
+			Object.defineProperty(a, mySymbol, { value: 'Hello!' });
+
+		a[mySymbol] // "Hello!"
+		注意： 不能用"."
+			// .运算符，属性名只能是string。
+			a.mySymbol = 'Hello!';  
+			// undefined 属性名是symbol时为undefined
+			a[mySymbol] 
+			// "Hello!"  属性名为string了
+			a['mySymbol'] 
+		d. Symbol 作为属性名，getOwnPropertySymbols
+			属性不会出现在for...in、for...of循环中，
+			不会被Object.keys()、Object.getOwnPropertyNames()、JSON.stringify()返回。
+			它不是私有属性，有一个Object.getOwnPropertySymbols方法，可以获取指定对象的所有 Symbol 属性名。
+			var obj = {};
+			var a = Symbol('a');
+			var b = Symbol('b');
+			obj[a] = 'Hello';
+			obj[b] = 'World';
+			var objectSymbols = Object.getOwnPropertySymbols(obj);
+
+			objectSymbols // [Symbol(a), Symbol(b)]
+		e. Reflect.ownKeys
+			返回所有类型的键名，包括常规键名和 Symbol 键名
+			let obj = {
+  				[Symbol('my_key')]: 1,
+  				enum: 2,
+  				nonEnum: 3
+			};
+
+			Reflect.ownKeys(obj)
+			// [Symbol(my_key), 'enum', 'nonEnum']
+		f. 总结
+			由于以 Symbol 值作为名称的属性，不会被常规方法遍历得到。我们可以利用这个特性，为对象定义一些非私有的、但又希望只用于内部的方法。
+	7-6：Symbol.for()
+		Symbol.for接受一个字符串作为参数，然后搜索有没有以该参数作为名称的Symbol值。
+		如果有，就返回这个Symbol值，否则就新建并返回一个以该字符串为名称的Symbol值。
+		var s1 = Symbol.for('foo');
+		var s2 = Symbol.for('foo');
+		s1 === s2 // true
+
+		调用Symbol.for("cat")30次，每次都会返回同一个 Symbol 值，但是调用Symbol("cat")30次，会返回30个不同的Symbol值。
+		Symbol.for为Symbol值登记的名字，是全局环境的，可以在不同的 iframe 或 service worker 中取到同一个值
+	7-7: Symbol.keyFor()
+		方法返回一个已登记的 Symbol 类型值的key。
+		var s1 = Symbol.for("foo");
+		Symbol.keyFor(s1) // "foo"
+
+		var s2 = Symbol("foo");
+		Symbol.keyFor(s2) // undefined
+		Symbol()写法，没有登记机制。
+
+8. Set: 新数据类型，类似于数组，但成员唯一，没有重复。
+	8-1: 用来数组去重：
+		var set = new Set([1, 2, 3, 4, 4]);
+		[...set]
+		// [1, 2, 3, 4]
+
+		等同于：
+		var set = new Set();
+		var arr = [1,2,3,4,4];
+		arr.forEach((i) => set.add(i))
+		console.log(...set);
+	8-2：Set内部判断相等：
+		不会进行类型转换， 所以5和"5"是不一要的。
+		内部判断相等，使用“Same-value equality”的方法，与===相似，不同在于， 二个NaN相等
+		二个对象总是不相等的
+	8-3: Set实例对象的属性和方法：
+		属性：
+			var s = new Set();
+			s.constructor	// Set
+			s.size			//成员的总数，像8-1中，set.size 是4
+		方法：
+			add(value)：添加某个值，返回Set实例对象本身。
+			delete(value)：删除某个值，返回一个布尔值，表示删除是否成功。
+			has(value)：返回一个布尔值，表示该值是否为Set的成员。
+			clear()：清除所有成员，没有返回值。
+	8-4：遍历操作：
+		keys()：返回键名的遍历器
+		values()：返回键值的遍历器
+		entries()：返回键值对的遍历器
+		forEach()：使用回调函数遍历每个成员
+
+		Set的遍历顺序就是插入顺序
+
+9. Map结构
+	它类似于对象，也是key-value,但key不局限于字符串，各种类型的值（包括对象）都可以当作键。
+	var m = new Map();
+	var o = {p: 'Hello World'};
+	m.set(o, 'content'); 	//接受以对象o作为key
+	m.get(o) // "content"
+	m.has(o) // true
+	m.delete(o) // true
+	m.has(o) // false
+	9-1: 以数组作为new 时参数：
+		var map = new Map([
+  			['name', '张三'],
+  			['title', 'Author']
+		]);
+		等同于：
+		arr.forEach((item, key) => map.add(key, item))
+	9-2: 如果对同一个键多次赋值，后面的值将覆盖前面的值
+	9-3: 如果读取一个未知的键，则返回undefined。
+		new Map().get('asfddfsasadf')   //undefined
+	9-4: Map的键实际上是跟内存地址绑定的，只要内存地址不一样，就视为两个键
+		var map = new Map();
+		map.set(['a'], 555);
+		map.get(['a']) // undefined
+		上面二个['a']，是二个不两只内存地址的数组。
+
+		如果key是基本类型，则严格相等后，就是同一个key。
+	9-5： Map实例对象的属性和方法：
+		属性：
+		size：属性返回Map结构的成员总数。
+		方法：
+		set(key, value)： set方法设置key所对应的键值，然后整个Map实例对象
+						 如果key已存在，则用新值覆盖
+		get(): 读取key对应的键值，如果找不到key，返回undefined。
+		has(): 返回一个布尔值，表示某个键是否在Map数据结构中
+		delete():删除某个键，返回true。如果删除失败，返回false。
+		clear(): 清除所有成员，没有返回值。
+	9-6: 遍历的方法：
+		keys()：返回键名的遍历器。
+		values()：返回键值的遍历器。
+		entries()：返回所有成员的遍历器。
+		forEach()：遍历Map的所有成员。
+
+		Map的遍历顺序就是插入顺序。
+	9-7：与其它类型转换：
+		Map转数组：
+			let myMap = new Map().set(true, 7).set({foo: 3}, ['abc']);
+			[...myMap]  // [[true, 7], [foo, 3], ['abc']]
+
+10. propx
+	10-1.定义
+		在目标对象之前架设一层“拦截”，外界对该对象的访问，都必须先通过这层拦截，因此提供了一种机制，可以对外界的访问进行过滤和改写
+		var proxy = new Proxy(target, handler);
+		target: 目标对象，即你要保护的对象
+		handler: 定义拦截行为， 可以在进行get,set的拦截定义
+	10.2：例：
+		var proxy = new Proxy({}, {
+	  		get: function(target, property) {
+	    		return 35;
+	  		}
+		});
+		//对所有对象，进行get拦截，取值都返回35
+		proxy.time // 35
+		proxy.name // 35
+	10-3：要操作的是proxy实例
+		要使得Proxy起作用，必须针对Proxy实例（上例是proxy对象）进行操作，而不是针对目标对象（上例是空对象）进行操作。
+		var a = {
+			name: 'cindy'
+		}
+		proxy.name //35, 这里也不会报错说proxy.name undefined
+		a.name;  //这里是cindy  要操作proxy的实例，而不是target。
+	10-4： 如果handle没有任何操作：
+		那就等同于直接通向原对象。
+		var target = {};
+		var handler = {};
+		var proxy = new Proxy(target, handler);
+		proxy.a = 'b';
+		target.a // "b" 因为proxy直接通向了target, 二者地址不一样，但值都是一样的
+	10-5：如何在object上调用代理，而不是在proxy实例 上
+		将Proxy对象，设置到object.proxy属性，从而可以在object对象上调用。
+		var object = { proxy: new Proxy(target, handler) };
+		let obj = Object.create(proxy);
+		这要就可以在obj上调用了
+		var proxy = new Proxy({}, {
+			get: function (target, key, receiver) {
+				 // return Reflect.get(target, key, receiver);
+				 return 35;
+			},
+			set: function (target, key, value, receiver) {	   
+			    return Reflect.set(target, key, value, receiver);
+			}
+		});
+		var obj = Object.create(proxy);
+		// var obj = {proxy: proxy};
+		obj.title;
+		obj.name = 'cindy';
+		console.log(obj.name);
+		console.log(obj);
+	10.6: 发现一个问题：
+		var proxy = new Proxy({}, {
+	  		get: function(target, property) {
+	    		return 35;
+	  		}
+		});		
+		console.log(proxy.time) // 35
+		proxy.time = 'hehe';
+        console.log(proxy.time);  // 35
+        这里， 对proxy.time进行set了， get时仍是35
+        这时proxy = {time: 'hehe'}
+
+        var proxy = new Proxy({}, {
+			get: function (target, key) {				 
+				 return 35;
+			},
+			set: function (target, key, value, receiver) {	   
+			    return Reflect.set(target, key, value, receiver);
+			}
+		});
+		var obj = Object.create(proxy);
+		console.log(obj.time);  //35
+		obj.time = 'haha';
+		console.log(obj.time);	// haha
+		这时， obj = {time: 'haha'}
+		obj = {
+			time: 'haha',  //到这里，就取出来了，不再往下遍历了
+			__proto__: Proxy{
+				get:...
+			}
+		}
+	10-7：proxy支持的拦截操作：
+		a. get(target, propKey, receiver)
+			拦截对象属性的读取，比如proxy.foo和proxy['foo']
+		b. set(target, propKey, value, receiver)
+			拦截对象属性的设置，比如proxy.foo = v或proxy['foo'] = v，返回一个布尔值
+		c. has(target, propKey)
+			拦截propKey in proxy的操作，以及对象的hasOwnProperty方法，返回一个布尔值。
+		d. deleteProperty(target, propKey)
+			拦截delete proxy[propKey]的操作，返回一个布尔值。
+		e. ownKeys(target)
+			拦截Object.getOwnPropertyNames(proxy)、Object.getOwnPropertySymbols(proxy)、Object.keys(proxy)，返回一个数组。该方法返回对象所有自身的属性，而Object.keys()仅返回对象可遍历的属性。
+		f. getOwnPropertyDescriptor(target, propKey)
+			拦截Object.getOwnPropertyDescriptor(proxy, propKey)，返回属性的描述对象。
+		g. defineProperty(target, propKey, propDesc)
+		defineProperty(target, propKey, propDesc)
+			拦截Object.defineProperty(proxy, propKey, propDesc）、Object.defineProperties(proxy, propDescs)，返回一个布尔值。
+		h. preventExtensions(target)
+			拦截Object.preventExtensions(proxy)，返回一个布尔值。
+		i. getPrototypeOf(target)
+			拦截Object.getPrototypeOf(proxy)，返回一个对象。
+		j.isExtensible(target)
+			拦截Object.isExtensible(proxy)，返回一个布尔值。
+		k. setPrototypeOf(target, proto)
+			拦截Object.setPrototypeOf(proxy, proto)，返回一个布尔值。
+			如果目标对象是函数，那么还有两种额外操作可以拦截。
+		l. apply(target, object, args)
+			拦截 Proxy 实例作为函数调用的操作，比如proxy(...args)、proxy.call(object, ...args)、proxy.apply(...)。
+		m. construct(target, args)
+			拦截 Proxy 实例作为构造函数调用的操作，比如new proxy(...args)。
+	10-8: Reflect对象的方法
+		Reflect.apply(target,thisArg,args)
+		Reflect.construct(target,args)
+		Reflect.get(target,name,receiver)
+		Reflect.set(target,name,value,receiver)
+		Reflect.defineProperty(target,name,desc)
+		Reflect.deleteProperty(target,name)
+		Reflect.has(target,name)
+		Reflect.ownKeys(target)
+		Reflect.isExtensible(target)
+		Reflect.preventExtensions(target)
+		Reflect.getOwnPropertyDescriptor(target, name)
+		Reflect.getPrototypeOf(target)
+		Reflect.setPrototypeOf(target, prototype)
+
+	10-9: Proxy 实现观察者模式
+			const quequedObservers = new Set();
+			observe = fn => quequedObservers.add(fn);
+			const observable = obj => new Proxy(obj, {set});
+
+			function set (target, key, value, receiver) {
+				const result = Reflect.set(target, key, value, receiver);
+				quequedObservers.forEach(fn => fn());
+				return result;
+			}
+
+11. Reflect:
+	ES6为操作对象提供的API
+	1-1：Reflect设计目的：
+		a. 将Object对象的一明显属于语言内部的方法，放到Reflect对象上。
+			Object.definedProperty  ==>
+			Reflect.definedProperty
+		b. 修改某些Object方法的返回结果。
+			Object.definedProperty(obj, name, desc)如果无法定义属性，则抛出错
+			Reflect.definedProperty(obj, name, desc)无法定义时，返回false
+		c. 让Object操作， 都变成了函数行为
+			'assign' in Object ==>  Reflect.has(Object, 'assign')
+			delete obj[name] ==>  Reflect.deleeProperty(obj, name)
+		d. Reflect对象的方法与Proxy对象的方法，一一对应
+			只要是Proxy对象的方法，就能在Reflect对象上找到对应的方法。
+			不管Proxy怎么修改默认行为， 总要以在Reflect上获得默认行为。
+	1-2： Reflect 的静态方法：
+		Reflect.apply(target, thisArg, args)
+		Reflect.construct(target, args)
+			等同于new target(...args)
+			function Greeting(name) {
+				this.name = name;
+			}
+			const greet = Reflect.construct(Greeting, ['cindy']);
+			第一个参数，不是对象，会报错
+
+		Reflect.get(target, name, receiver):
+			查找并返回target对象的name属性值， 没有，则返回undefined
+			target不是对象，会报错
+		Reflect.set(target, name, value, receiver)
+			设置target对象的name属性值 为value
+			target不是对象，报错
+		Reflect.defineProperty(target, name, desc)
+		Reflect.deleteProperty(target, name)
+			删除target的name属性
+			等同于delete obj[name]操作
+			删除成功， 或name属性不存在， 返回true
+			删除失败返回false
+			target不是对象，会报错
+		Reflect.has(target, name)
+			对应 name in obj的in运算符
+			target不是对象，会报错
+
+		Reflect.ownKeys(target)
+		Reflect.isExtensible(target)
+			对象是否可扩展
+		Reflect.preventExtensions(target)
+			让一个对象变为不可扩展
+		Reflect.getOwnPropertyDescriptor(target, name)
+		Reflect.getPrototypeOf(target)
+			读取对象的__proto__属性， 等同于 Object.getPrototypeOf(obj)
+			Object.getPrototypeOf(obj)如果参数不是对象，会将其转为对象再运行
+			Reflect.getPrototypeOf(obj),如果参数不是对象，会报错
+
+		Reflect.setPrototypeOf(target, prototype)
+			用于设置目标对象的原型，
+			等同于:Object.setPrototypeOf(obj, newProto)
+			设置成功，返回true，失败返回false
+			Object.setPrototypeOf()第一个参数不是对象，会先转成对象，再运行
+			Reflect.getPrototypeOf()第一个参数不是对象，会报错
+
+12.Iterator： 遍历器
+	JS中有四种数据集合： Array, Object, Map, Set
+
+	遍历器： 一种接口，为各种不同的数据结构，提供统一的访问机制。
+			任何数据结构，只要部署了Iterator接口，就可以完在遍历。
+			
+	12-1： 遍历器遍历过程：
+		a. 创建一个指针对象，指向当前数据结构的起始位置
+		b. 第一次调用指针对象的next方法，将指针指向数据结构的第一个成员
+		c. 第二次调用指针对象的next方法，指针指向数据结构的第二个成员
+		d. 不断调用指针对象的next方法，直接数据的末尾。
+
+		每次调用next()都会返回当前成员信息，包括value:当前成员的值, done:是否遍历结束
+
+		对于遍历器来说，value:undefined,   done:false 都是会被忽略的。
+		var it = makeIterator(['a', 'b']);
+		it.next();  //{value:a, done: false}
+		it.next();	// {value:b, done:false}
+		it.next();	// {value:undefined, done:true}
+
+		function makeIterator(arr) {
+			var nextIndex = 0;
+			return {
+				next: function (){
+					return nextIndex < arr.length?
+						{value: arr[nextIndex++], done:false} :
+						{value: undefined, done:true}
+				}
+			}
+		}
+
+		===> 迭代器可以缩写为：
+
+		function makeIterator(arr) {
+			var nextIndex = 0;
+			return {
+				next: function{
+					// 对于 迭代器，value: undefined, 和 done: false都会被忽略
+					return nextIndex < arr.length ?
+						{value: arr[nextIndex++]} :
+						{done: ture}
+				}
+			}
+		}
+
+	12-2: 默认Iterator接口
+		当使用for...of循环遍历某种数据结构时，会主动去寻找Iterator接口。
+		一种数据结构，只要部署了Iterator接口，就称这种数据可遍历iterable。
+		ES6 规定，默认的 Iterator 接口部署在数据结构的Symbol.iterator属性
+		const obj = {
+			[Symbol.iterator]: function (){
+				return {
+					next: function(){
+						return {
+							value: 1,
+							done: true
+						}
+					}
+				}
+			}
+		}
+
+	12-3: 原生具备Iterator接口的数据结构有：
+		Array, Map, Set, String, TypedArray, 函数的arguments, NodeList对象
+
+		这些数据类型，原生部署了Symbol.iterator属性
+		let arr = ['a', 'b', 'c'];
+		let iter = arr[Symbol.iterator]();
+
+		iter.next() // { value: 'a', done: false }
+
+		为一个对象， 增加一个Iterator：
+		class RangeIterator{
+			constructor(start, stop) {
+				this.value = start;
+				this.stop = stop;
+			}
+
+			[Symbol.iterator]() {
+				return this;
+			}
+			next() {
+				var value = this.value;
+				if (value < this.stop) {
+					this.value++;
+					return {
+						done: false, 
+						value: value
+					};
+				}
+				return {
+					done: true,
+					value: undefined
+				}
+			}
+		}
+
+		function range(start, stop) {
+			return new RangeIterator(start, stop);
+		}
+
+		for (var value of range(0,3)) {
+			console.log(value);
+		}
+
+
+	12.4: 类数组对象的Iterator
+		let iterable = {
+			0: 'a',
+			1: 'b',
+			2: 'c',
+			length: 3
+			[Symbol.iterator]:  Array.prototype[]
+		}
+
+
+
+14. Generator的异步应用
+	14-1. 异步的传统方法：
+		回调函数
+		Promise
+	14-2. 协程：	coroutine
+		多个线程互相协助，完成异步任务
+		a. 第一步，协程A开始执行、
+		b. 第二步，协程A执行到一半，进入暂停，执行权转移给协程B。执行B的内容 
+		c. 第三步， 一段时间后，协程B交还执行权给A。
+		d. 第四步，协程A恢复执行，继续没有执行完的代码
+	14-3： next()方法的参数传入
+		function* gen(x) {
+			// 运行到这句， yield x+2后，  x+2 的值，是给obj 的value属性的
+			// 返回了{value:3, done:false},协程A交出了执行权
+			// y = undefined， 是没有赋值的
+			var y = yield x + 2;
+			return y;
+		}
+		var g = gen();
+		g.next();  // {value:3, done: false}
+		// g.next();  // {value: undefined, done: true}   
+		g.next(2);  // {value:2, done:true}
+		// g.next(2) // 这个参数可以传入 Generator 函数，作为上个阶段异步任务的返回结果, 赋值给了y
+					 // return 后面的表达式， 作为返回对象的value值了
+	14-4： 错误处理
+		function* gen(x) {
+			try {
+				var y = yield x + 2;
+			} catch(e) {
+				console.log('some errors happend:', e);
+			}
+		}
+
+		var g = gen(1);
+		g.next();		// {value:3, done: false}
+		g.throw('错了');   // console.log('some errors happend: 错了');
+		throw()方法，被gen()函数体内的try..catch...捕获
+
+	14-5：Generatr 的真实异步函数
+		function* getData () {
+			var sUrl = '//...homePage.htm';
+			var res = yield fetch(sUrl);
+			console.log(res);
+		} 
+		
+		var g = getData();
+		var res = g.next();
+		res.value.then((data) => {
+			return data.json();
+		}).then(data => {
+			// 让getData函数内的 var res = data了
+			g.next(data);
+		})
+
+		generaotr 函数， 得自己手动加next()运行， 即代码执行流程不人性化
+
+	14-6： thunk函数和 generator函数
+		自动执行 Generator 函数
+		function run(fn) {
+			var gen = fn()
+			function next(err, data) {
+				var res = gen.next(data);
+				if (res.done) {
+					return;
+				}
+				res.value(next);
+			}
+
+			next();
+		}
+
+		function* g();
+		run(g);
+
+
+
+
+
+		function* gen(x) {	
+			var y = yield x + 2;
+			return y;
+		}
+		function run(fn) {
+			var args = Array.prototype.splice.call(arguments,1);
+			console.log(args);
+			var gen = fn(args[0]);
+			// var args = arguments.splice(1);
+			
+			function next(err, data) {
+				var res = gen.next(data);
+				console.log(res);
+				if (res.done) {
+					return;
+				}
+				console.log(gen.next(res.value));
+			}
+
+			next();
+		}
+		run(gen, 2);
+
+
+15. async 函数
+	async函数，就是generator函数的语法糖
+	const gen = function* () {
+  		const f1 = yield readFile('/etc/fstab');
+  		const f2 = yield readFile('/etc/shells');
+  		console.log(f1.toString());
+  		console.log(f2.toString());	
+	};
+
+	可以用async改为：
+	const asyncGen = async function () {
+		const f1 = await readfile('...txt');
+		const f2 = await readfile('.....js');
+		console.log(f1.toString());
+		console.log(f2.toString());
+	}
+	15-1： async与 generator的区别：
+		a. 内置了执行器：
+			直接运行asyncGen()就可以了 不需要next()
+		b. 更好的语义：
+			async表示函数里有异步操作，
+			await表示紧跟在后面的表达式需要等待结果。
+		c. yield, await后面语句的不同：
+			yield只能是thunk或promise对象
+			await: 可以是promise对象
+					可以是原始类型的值，但会自动转成立即 resolved 的 Promise 对象
+		d. async返回值是promise对象
+			

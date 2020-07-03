@@ -1,0 +1,46 @@
+一、强缓存，协商缓存：
+	区别：使用本地缓存的时候，是否需要向服务器验证本地缓存是否依旧有效。
+			协商缓存，是需要和服务器进行协商，最终确实是否使用本地缓存。
+
+
+二、强缓存：
+	通过http请求头中的Cache-Control Expire二个字段控制。
+	Cache-Control: 一般值设置为“public, max-age=xxx”, 表示在xxx秒内再次访问该资源，均使用本地缓存。
+
+	在XXX秒内，服务器的资源更新了， 但客户端没有强制刷新，就用了旧的东西了。
+
+三、协商缓存：
+	每次都向服务器验证一下缓存是否有效。
+	有ETag 和 Last-Modified两个字段。
+	ETag 与 Last-Modified 谁优先： 
+		在Express中， 用了fresh包，策略是“如果不是强制刷新，而且请求头带上了 if-modified-since 和 if-none-match 两个字段，则先判断 etag，再判断 last-modified。” 也可以自己重新写。
+
+
+
+
+四、最佳缓存：
+	缓存的意义： 减少请求，更多地使用本地资源，给用户更好的体验，减轻服务器压力。
+
+	最佳方法：尽可能用强缓存，但在更新版本时，让客户端的缓存失效。
+	更新版本后， 把静态资源路径改掉，即a.js?v=1， 1改成了2。 这可借助于webpack等工程化工具。
+	HTML：协商缓存
+	CSS,JS,图片：强缓存， 名件名带上hash值
+	在代码分包打包时， 将一些常用不变的公共库独立打包出来。
+
+
+	webpack的三种hash值：
+		hash: 只要项目里文件更改，整个项目构建的hash值都会更改。
+		chunkhash:根据不同的入口文件进行依赖文件解析，构建对应的chunk，生成对应的hash值；
+		contenthash: 文件内容产生的hash值，内容不同产生的contenthash值也不一样。
+
+
+
+五、后端要怎么设置：	
+	以node.js为例：
+		强缓存：
+		res.setHeader(Cache-Control, public, max-age=xxx);
+
+		协商缓存：
+		res.setHeader(Cache-Control, public, max-age=0);
+		res.setHeader(Last-Modified, xxx);
+		res.setHeader(ETag, xxx);

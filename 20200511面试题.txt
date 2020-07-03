@@ -1,0 +1,430 @@
+2020.5.11面试题
+1. 享定制， 360度旋转动画除了图片序列帧，还有什么好的方法？
+			这么多图片，怎么优化，图片预加载，压缩
+			图片压缩二种：失真压缩，的区别
+			webpack里图片压缩的插件有什么？
+
+
+			图片压缩原理：因为图像数据中存在冗余。 
+				1. 空间冗余（相邻像素）；单张图片上
+				2. 时间冗余（不同序列帧）；动画上
+				3. 视觉冗余（人类视觉的一般分辨能力为26灰度等级，而一般的图像的量化采用的是28灰度等级，即存在视觉冗余）
+			压缩的方法：
+				a. 有损数据压缩：绘制的技术图，图表，漫画， 有价值的归档内容等
+					原理：相同的颜色信息，只需保存一次。
+					优点：较好地保存图像的质量；
+					缺点：压缩率较低 
+					解压以后的数据和原始数据不完全一致，是不可逆压缩方式
+					图像、视频、音频数据的压缩比可高达100:1
+				b. 无损数据压缩：自然的图像，可接受的微小损失
+					要求解压以后的数据和原始数据完全一致。解压后得到的数据是原数据的复制，是一种可逆压缩
+					无失真压缩法去掉或减少数据中的冗余，恢复时再重新插到数据中
+					无损压缩算法一般可以把普通文件的数据压缩到原来的1/2－1/4
+
+			前端对图片的压缩：
+				1. 上传某些网站，工具压缩；七牛， png图片压缩
+				2. 后端压缩
+				3. canvas压缩:
+					a. 通过input file，拿到file.
+					b. 通过new FileReader()的readAsDataURL(), 把a.中拿到的file转成base64
+					c. 使用canvas读取base64 并降低分辨率
+					d. 把canvas数据转成blob对象
+					e. 把blob对象转file对象
+					f. 完成压缩
+
+
+2. JSONP的原理，优缺点
+	原理：
+		srcipt的src, image的src, link的href  等静态资源请求，不被同源策略限制
+		静态资源请求，本质上是get
+
+		JSONP，就是利用这些src, href，发起一个get请求，不受同源限制；
+		同时服务器返回带有数据的callback; 
+		前台代码：
+				var frame = document.createElement('script');
+				frame.src = 'http://localhost:3000/article-list?name=leo&age=30&callback=func';
+				$('body').append(frame)
+
+				function func (res) {
+					alert(res.message+res.name+'你已经'+res.age+'岁了');
+				}
+			
+			后台代码：
+			router.get('/article-list', (req, res) => {
+  				console.log(req.query, '123');
+  				let data = {
+    				message: 'success!',
+    				name: req.query.name,
+    				age: req.query.age
+  				}
+  				data = JSON.stringify(data)
+  				res.end('func(' + data + ')');
+  			});
+
+	优点：不受同源限制，比ajax兼容性好，有个 callback
+	缺点：
+		a. 只支持get, 
+		b. 只支持HTTP跨域请求不能解决二个页面间JS的调用， 
+		c. 调用失败时不会返回状态码
+		d. 缺点是安全性。万一假如提供jsonp的服务存在页面注入漏洞，即它返回的javascript的内容被人控制的。那么结果是什么？所有调用这个 jsonp的网站都会存在漏洞
+	
+	跨域产生的原因：
+		浏览器同源策略限制，非同源下请求，都会产生跨域；
+		同源：同主域，同端口，同协议
+
+	同源策略限制的是什么？
+		a. 同源策略对网页的HTML文档做了限制，但script, link, iframe, img 等标签可以加载跨域资源。但浏览器限制了JavaScript的权限使其不能读、写加载的内容。
+		b. 页面中的链接，重定向以及表单提交是不会受到同源策略限制的
+		c. 跨域资源嵌入是允许的(src jsonp请求后嵌入)
+
+	浏览器同源策略主要限制：
+		a. Cookie,  localstorage, sessionStorage, IndexDB无法读取
+		b. Dom节点无法读取和设置
+		c. ajax请求无法发送。
+
+	资源是否有跨域限制
+		在浏览器中，<script>、<img>、<ifram>、<link>等标签都可以跨域加载资源，而不受同源策略的限制。这些带“src”的标签每次加载时，实际上是由浏览器发起了一次GET请求。
+		不同于XMLHttpRequest的是，通过src属性加载的资源，浏览器限制了JavaScript的权限，使其不能读写返回的内容。
+	百度如何做防盗链
+		盗链：浏览器在页面呈现的过程，拉取非本站的资源，这就称“盗链”。
+			  浏览器在加载非本站的资源时，会增加一个头域，头域名字固定为 Referer
+			  就是说浏览器在加载 非本域资源时， 会在Request Headers里， 增加一个Referer的属性值 
+			  服务器端，在接收到请求头上的referer时，可以判断是否给相应的数据
+
+			  通过referer，网站可以检测目标网页访问的来源网页，如果是资源文件，则可以跟踪到显示它的网页地址
+	项目的跨域是怎么做的？CORS要怎么配置
+		node.js为例：
+		配置Response响应头中的 Access-Control-Allow-Origin 属性为你允许该接口访问的域名
+		res.header('Access-Control-Allow-Origin', '*');
+		res.header('Access-Control-Allow-Credentials', 'true'); // 允许服务器端发送Cookie数据
+		以上配置，表示该接口允许所有的域名对它进行跨域请求。
+		指定域名可以跨域：Access-Control-Allow-Origin指定
+		a. 指定二级域：res.header('Access-Control-Allow-Origin', '*.666.com'); 
+		b. 指定哪几个域：res.header('Access-Control-Allow-Origin', 'a.666.com,b.666.com,c.666.com');
+		在node.js中：
+		a. res的响应头Header中的 Access-Control-Allow-Origin 属性不能匹配除 (*) 以外的正则表达式的，
+		b. 域名之间不能也用逗号分隔。
+		也就是说， Access-Control-Allow-Origin 的属性值只允许设置为单个确定域名字符串或者 (*)。
+		常用的作法：
+		在服务器端判断请求的Header中Origin属性值（req.header.origin）是否在我们的域名白名单列表内。如果在白名单列表内，那么我们就把 Access-Control-Allow-Origin 设置成当前的Origin值，这样就满足了Access-Control-Allow-Origin 的单一域名要求，也能确保当前请求通过访问；如果不在白名单列表内，则返回错误信息。
+		代码:
+		// 判断origin是否在域名白名单列表中
+		function isOriginAllowed(origin, allowedOrigin) {
+		 	if (_.isArray(allowedOrigin)) {
+		 		for(let i = 0; i < allowedOrigin.length; i++) {
+		  			if(isOriginAllowed(origin, allowedOrigin[i])) {
+		  				return true;
+		  			}
+		 		}
+		 		return false;
+		 	} else if (_.isString(allowedOrigin)) {
+		 		return origin === allowedOrigin;
+		 	} else if (allowedOrigin instanceof RegExp) {
+		 		return allowedOrigin.test(origin);
+		 	} else {
+		 		return !!allowedOrigin;
+		 	}
+		}
+		 
+		 
+		const ALLOW_ORIGIN = [ // 域名白名单
+		 	'*.233.666.com',
+		 	'hello.world.com',
+		 	'hello..*.com'
+		];
+		 
+		app.post('a/b', function (req, res, next) {
+		 	let reqOrigin = req.headers.origin; // request响应头的origin属性
+		 
+		 	// 判断请求是否在域名白名单内
+		 	if(isOriginAllowed(reqOrigin, ALLOW_ORIGIN)) {
+		 		// 设置CORS为请求的Origin值
+		 		res.header("Access-Control-Allow-Origin", reqOrigin);
+		 		res.header('Access-Control-Allow-Credentials', 'true');
+		 
+		 		// 你的业务代码逻辑代码 ...
+		 		// ...
+		 	} else {
+		 		res.send({ code: -2, msg: '非法请求' });
+		 	}
+		});
+
+3. cookie和session的区别
+	sesssion: 通过在服务器端记录信息确定用户身份
+			session称会话，用来跟踪某一个用户的整个会话。
+			Session相当于程序在服务器上建立的一份客户档案，客户来访的时候只需要在服务器端查询客户档案表就可以了。
+			Session对象是在客户端第一次请求服务器的时候创建的。
+			Session也是一种key-value的属性对。
+			当多个客户端执行程序时，服务器会保存多个客户端的Session。
+			获取Session的时候也不需要声明获取谁的Session。Session机制决定了当前客户只会获取到自己的Session，而不会获取到别人的Session。各客户的Session也彼此独立，互不可见。
+
+			为了获得更高的存取速度，服务器一般把Session放在内存里。为了减少内存，Session里的信息应该尽量精简。
+
+
+			Session在用户第一次访问服务器的时候自动创建。
+			需要注意只有访问JSP、Servlet等程序时才会创建Session，只访问HTML、IMAGE等静态资源并不会创建Session。
+			Session生成后，只要用户继续访问，服务器就会更新Session的最后访问时间，并维护该Session。
+			用户每访问服务器一次，无论是否读写Session，服务器都认为该用户的Session“活跃（active）”了一次。
+
+			为防止内存溢出，服务器会把长时间内没有活跃的Session从内存删除。这个时间就是Session的超时时间。
+			如果超过了超时时间没访问过服务器，Session就自动失效了。
+
+			session虽然保存在服务器端， 但它对客户端是透明的。
+			因为http的无状态状，服务器端要依赖cookie作为标识符来知道用户。服务器向客户端发送一个名为JSESSSIONID的cookie,值为该session的ID， 依赖此cookie来判断是否为同一用户。
+			该cookie是服务器自动 生成的，它的maxAge一般为-1，即关闭浏览器就失效，各浏览器窗口不共享；但浏览器窗口内的A链接，脚本window.open打开的新窗口，是共享此cookie的，即共享同一个session.
+
+
+
+	cookie: 在客户端记录信息确定用户身份
+			HTTP请求是无状态的，请求发起到结束，同一个用户再发起请求，HTTP是不知道是同一个用户。
+			为了解决HTTP的无状态，给客户端们颁发一个通行证吧，每人一个，无论谁访问都必须携带自己通行证。这样服务器就能从通行证上确认客户身份了。这就是Cookie的工作原理
+			cookie依赖浏览器的支持，如果浏览器禁止了cookie,则不能用cookie了。
+			cookie是一系列key=value的字符串
+			cookie具有不可跨域名性， 需要一级域名完全一样
+			cookie的属性：
+				name: cookie名，即key=value里的key
+				value: cookie值， 即key=value里的value
+				maxAge：失效时间，单位为s.
+						正数，则为指定的maxAge后失效
+						负数，则为临时cookie,关闭浏览器就失效。
+						0，则表示 删除 此cookie
+						默认为-1
+				secure：是否仅被使用安全协议传输
+						安全协议有HTTPS，SSL等，在网络上传输数据之前先将数据加密。
+						默认为false
+				path: 该cookie的使用路径
+						'/sessionWeb/':则只有contextPath为“/sessionWeb”的程序可以访问该Cookie
+						'/':则本域名下contextPath都可以访问该Cookie
+				domain: 可以访问该cookie的域名，
+						'.baidu.com': 二级域名为baidu.com的，都可以访问该cookie
+						'www.baidu.com': 只有一级域名www.baidu.com可以访问该cookie
+
+			Cookie中通过getMaxAge()方法与setMaxAge(int maxAge)方法来读写maxAge属性。
+
+	cookie和session的区别:
+		a. cookie数据存放在客户的浏览器上，
+			session数据放在服务器上
+			客户端以cookie的形式发送session id给服务器端。
+			session id是服务器端和客户端链接时随机分配的，极少数可以会重复。
+		b. cookie不是很安全，别人会分析存放在本地的cookie进行欺骗,session 存在于服务器，不容易获取
+		c. cookie只能设置maxAge来使cookie过期；
+			sesssion可以用其destory() API来销毁
+		d. 单个cookie保存数据不超过4K, 很多浏览器限制一个站点最多保存20个cookie.
+			session对象没有存储数据量的限制。
+		e. 生命周期不一样： session,浏览器关闭就失效了。
+			cookie可设置maxAge，有效时间
+
+
+		session很容易失效，用户体验差
+		cookie不安全，但可以加密 
+
+	封装getCookie, setCookie,保证每个调用 的都是encode过的
+		getCookie: 
+			getCookie: function(key) {
+            	var result = document.cookie.match(new RegExp("(^| )" + key + "=([^;]*)"));   
+            	// 把value值进行解码         
+            	return result != null ? decodeURIComponent(result[2]) : null;
+        	}
+        setCookie:
+        	setCookie: function(key, value, domain, expire) {
+	            var expires = new Date();
+	            // 如果没有设置domain，可以取你cookie里某个key的domain，来做为默认domain
+	            if (!domain) {
+	                domain = document.cookie.match(/(^| )city\.domain=([^;]*)(;|$)/);
+	                domain && (domain = domain[2]);
+	            }
+	            // 如果没有设置过期，默认用12个月，做为有效期
+	            /* 12个月 x 一个月当作 30 天 x 一天 24 小时 x 一小时 60 分 x 一分 60 秒 x 一秒 1000 毫秒 */
+	            if(!expire){
+	                expires = expires.setTime(expires.getTime() + 12 * 30 * 24 * 60 * 60 * 1000);
+	            }
+	            var domainStr = domain && domain != "null" ? (";domain=" + domain) : "";
+	            // expire参数传入的是天数
+	            var expireMs = expire && expire != "null" ?(new Date().getTime() + expire*24*60*60*1000 ) : expires;
+	            var nDate = new Date(expireMs);
+	            document.cookie = key+"=" + encodeURIComponent(value) + ";expires=" + nDate.toGMTString() + ";path=/" + domainStr;
+	        },
+	如何 设置永久cookie
+		1. 使用 9999年12月31日 23：59：59
+			function addCookie(name, value) {
+				let str = name + '=' + escape(value);
+				str += ';expires=Fri, 31 Dec 9999 23:59:59 GMT';
+				str += '; path=/';
+				document.cookie = str;
+			}
+		2. 使用世界末日： 
+			new Date(0x7fffffff * 1e3)
+			Tue, 19 Jan 2038 03:14:07 GMT，它是32位带符号整数能表示从1 January 1970 00:00:00 UTC开始的最大秒长(即01111111111111111111111111111111, 是 new Date(0x7fffffff * 1e3)).
+	删除cookie:
+		Cookie机制没有提供删除Cookie的方法，因此通过设置该Cookie即时失效实现删除Cookie的效果。
+		失效的Cookie会被浏览器从Cookie文件或者内存中删除
+
+		修改、删除Cookie时，新建的Cookie除value、maxAge之外的所有属性，例如name、path、domain等，都要与原Cookie完全一样。否则，浏览器将视为两个不同的Cookie不予覆盖，导致修改、删除失败。
+		所以cookie的修改，不是按key， 在document.cookie的字符串里搜索覆盖的。只要key, path, domain 值与原来的一样，就认为是修改cookie，覆盖原来的。
+		删除cookie也是， 把maxAge设置为0时， 把key, path, domain, 也传入一样的，就会覆盖原来的，而因有效期过了被删除；
+
+
+
+
+	三个编码函数escape, encodeURI， encodeURIComponent的区别
+		中文属于Unicode字符，在内存中占4个字符，而英文属于ASCII字符，内存中只占2个字节；
+		Cookie中使用Unicode字符时需要对Unicode字符进行编码，否则会乱码。
+		Cookie中保存中文只能编码。一般使用UTF-8编码即可,GBK浏览器可能不支持
+
+		一般来说， URL只能使用英文字母，阿拉伯数字和某些标点符号，不能使用其他文字和符号。
+		如果URL中有汉字，必须编码后使用
+		a. escape()
+			是JS编码中，最古老的一个。现在已经不提倡使用了
+			它不能直接用于URL编码；
+			它真正作用是返回一个字符的Unicode编码值；
+				eg: escape("春节");  返回"%u6625%u8282" 		
+					说明“春”是第6625个字符（十六进制）
+					escape("hello word"); 返回"hello%20word"
+			一旦编码后，就都变为unicode字符了。
+			不对“+”编码
+		b. encodeURI():
+			对整个URL进行编码，除了常见的符号以外，对其他一些在网址中有特殊含义的符号“; / ? : @ & = + $ , #”，也不进行编码。
+			编码后， 它输出符号是uft-8形式，每个字节前加上%
+			对单引号不编码
+			对应的解码是：decodeURI()
+		c. encodeURIComponent():
+			它用于对URL的组成部分进行个别编码，而不用于对整个URL进行编码。
+			因此，“; / ? : @ & = + $ , #”，这些在encodeURI()中不被编码的符号，在encodeURIComponent()中统统会被编码。
+			比encodeURI()编码的更彻底
+			解码函数：decodeURIComponent()
+
+4. ES6不支持 怎么办？
+		单独引用 某个组件库, ployfill
+		babel转译：太多转译的，拖累支持它的浏览器
+			babel,
+			JSX
+
+	怎么判断浏览器不支持某个ES6功能
+		浏览器检测：检测浏览器版本， 可用navigator对象
+		功能检测：
+			方法一：检测某个功能是否被支持
+				  如： 
+				  requestAnimationFrame = 
+   						window.requestAnimationFrame || 
+   						window.webkitRequestAnimationFrame || 
+   						window.mozRequestAnimationFrame || 
+   						false; 
+   				  var Promise = window.Promise || false;
+   				  if (!Promise) {
+   				  	//说明支持
+   				  }
+
+			方法二：try{...}catch(){....} 
+
+			检测是否支持ES6的Promise
+				function isNative(api) {
+					// Promoise.toString()     返回的是：function Promise() { [native code] }
+					// window[api]， 已经是 api.toString()  返回的事Promise() { [native code] }
+					var oApi = window[api] || false;
+					console.log('oApi:', window[api]);
+					if (oApi) {
+						// 说明是支持的
+						console.log('00:', oApi);
+						console.log('11:', /native code/.test(oApi));				
+						return /native code/.test(oApi);
+						// return /native code/.test(api.toString()) && typeof api !== 'undefined';
+					}
+					return false;			
+				}
+				var res1 = isNative('Promise');
+				console.log('res1 :', res1);
+
+				阮一峰老师写过一个es-checker库， 来检测是否支持ES6， 
+					URL: http://www.ruanyifeng.com/blog/2015/06/es-checker.html
+					他的源码里，也都是用try...catch
+					三个关键的函数：
+					// 针对passes, 需要运行代码的，如：
+					// letConst: { passes: "'use strict'; let a; const b = 2;" },
+					// 就在try里运行它
+					function tryPassFail(code) {
+  						try {
+    						runIt(code);
+    						return true;
+  						}
+  						catch (err) {
+    						return false;
+  						}
+					}	
+					// 针对有return值的，return它运行后的，如
+					// Promise: { is: "'use strict'; return ('Promise' in global);"},
+					function tryReturn(code) {
+  						try {
+    						return runIt(code);
+  						}
+  						catch (err) {
+    						return false;
+  						}
+					}
+
+				function runIt(code) {
+  					return (new Function(code))();
+				}
+	手写一个promise。
+		Promise是一种异步编程的解决方案
+		有三种状态： pending 过渡态, fulfilled 完成态, rejected 失败态
+					状态间变化，是不可逆的。可以从pending ---> fulfilled
+											    从pending ----> rejected
+		使用：
+			let promise = new Promise((resolve, reject) => {
+    			//这里放入我们要执行的函数，可能是同步，也可能是异步, 这里我们就来写一个异步的执行
+    			setTimeout(() => {
+        			resolve('hello');
+    			})
+			})
+    
+			promise.then(data => {
+    			console.log(data);
+			}, err => {console.log(err)})
+
+		构造器new Promoise：构造函数需要一个函数参数， 称为执行器， 
+				这个执行器接收二个参数（resolve, reject），第一个参数执行，可以让状态变为resolve，第二个参数执行，可以让状态变化reject
+			functio Promise (excutor) {
+				resolve(){
+    				把状态改为fulfilled
+    			}
+    			reject () {
+    				把状态改为rejected
+    			}
+    			try {
+    				excutor (resolve, reject)
+    			} catch() {
+    				reject();
+    			}
+			}
+		then: 
+			异步操作完成后， 才会调用then里指定的callback：
+					用cb数组+内部status属性，如果属性不是resolve，就不执行cb,推回cb数组，等待status变化
+			then可以链式调用：then返回的是一个新的Promise实例，不是原来的那个。
+					第一个回调函数完成以后，不管成功还是失败，只要有返回结果，都会进入下一个then的成功回调中。如果有异常，会进入下一个then的reject中；
+					原生的primse执行then方法,有时可能会返回一个结果，作为下一个promise的值value或失败的原因reason,这个结果可能是一个普通值也可能是一个promise
+					then链式调用，可以指定一组按照次序调用的回调函数：这时，前一个回调函数，有可能返回的还是一个Promise对象（即有异步操作），这时后一个回调函数，就会等待该Promise对象的状态发生变化，才会被调用。
+					then().then()链式调用中， 可以什么都不做， 值会一路穿透到， 要做事的then里
+					
+
+
+5. vue ssr 数据存在哪？
+	如果服务器端同有给浏览器data， 会怎样？
+	浏览器怎么知道data来了
+	vue组件的同步/异步加载 
+
+6. 大 转盘里，怎么让一个css3动画停下来
+	animation-play-state: paused|running; 暂停或开始动画
+	IE10及以上，就支持了
+	用在JS里： dDom.style.animationPlayState = 'paused';
+				dDom.style.animationPlayState = 'running';
+
+
+	怎么知道CSS3的动画结束了
+		当-webkit-animation动画结束时有一个webkitAnimationEnd事件，只要监听这个事件就可以了。 
+		// dDom为有CSS动画的dom
+		dDom.addEventListener("webkitAnimationEnd", function(){ //动画结束时事件 
+			console.log(22);			 
+		}, false); 
+
+
+7. 微信小程序框架源码

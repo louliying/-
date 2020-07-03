@@ -1,0 +1,610 @@
+1. webapcak 安装
+	全局安装 ：所有项目中的webpack会被锁定同一个版本，在不同版本的项目上， 会因版本的不兼容而构建失败。
+	本地安装：项目自身独立的webpack
+
+ 	webpack 4.0以上， 需要安装cli
+
+2. npx
+	安装： npm install -g npx
+	npm 5.2版本以上， 开始有npx
+
+	用途：可支行package.json里的script命令，即调用项目内部安装的模块 
+	如：script里的 node_modules/bin/webpack 
+		在cmd里支行：./node_modules/webpack/bin/webpack 
+		有了npx后： npx webpack 
+
+		./node_modules/bin/webpack/ --config webpack.config.js
+		npx webpack --config webpack.config.js
+	
+	如 运行项目里的mocha
+		cmd: node-modules/.bin/mocha --version
+		npx:  npx mocha --version
+
+	原理：运行的时候，会到node_modules/.bin路径和环境变量$PATH里面，检查命令是否存在。
+		 由于 npx 会检查环境变量$PATH，所以系统命令也可以调用
+
+	Bash命令不在PATH里，不支持npx
+
+3. 资源管理：
+	css: 需要style-loader css-loader
+		 处理的是.css文件， 把css文件插入到html的head中
+	css的预处理： postcss, sass, less
+	css背景图片： file-loader, 处理import MyImage from './my-image.png'
+				 css-loader, 处理css中的 url(./img/..png)  会把路径替换成本地文件路径
+				 html-loader， 处理html中的<img src="...png"
+	fonts: file-loader, url-loader可接收并加载任何文件
+
+4. output:  输出
+	output{
+		// 动态命令， 以entry里的为name
+		/*
+			 entry: {
+        		app: './src/index.js',
+        		print: './src/print.js'
+    		},
+			生成的是app.bundle.js 和 print.bundle.js
+		*/
+		filename: '[name].bundle.js'
+		path: path.resolve(__dirname, 'dist')
+	}
+
+5. html-webpack-plugin: 针对html
+	常用的options:
+		template: 指定生成的html的来源 模板
+		filename： 生成的html文件
+		inject: true, 'head', 'body' inject生成的js
+
+		一个HtmlWebpackPlugin只能生成一个.html文件
+
+6. clean-webpack-plugin: 清理 dist
+	const {CleanWebpackPlugin} = require('clean-webpack-plugin');
+	要这样引用了， 不然会报错
+
+7. 开发环境配置：
+	mode:'development' 指定为开发环境 
+	devtool: 将编译后的代码映射到 原始源代码, 有很多选项
+	热更新：
+		a. webpack watch mode: webpack观察者模式
+			如果一个文件修改， 代码将被重新编译，不必手动运行整个构建。
+			它不会自动刷新浏览器
+			node 命令：webpack --watch
+
+		b. webpack-dev-server： 提供简单的web server
+			依赖插件： webpack-dev-server
+			有 live reloading(实时重新加载) 功能： 代码一更新，就会自动 刷新浏览器
+			需要在webpack.config.js里配置：
+			...
+			devServer:{
+				contentBase:
+				port:
+				compress:
+				等等
+			}
+
+			node命令 ：  webpack-dev-server --open
+			默认起localhost:8080
+		c. webpack-dev-middleware
+			是一个封装器(wrapper)，它可以把 webpack 处理过的文件发送到一个 server。
+			可以单独使用，在其它package里使用。如webpack-dev-server内部就有用它
+			它可结合express使用
+			它不会刷新浏览器哦
+
+8. 模块热更新：HMR(hot module replacement), 	
+	HMR允许在运行时，更新所有类型的模块，而无需完全刷新
+	原理就是，使用了webpack-dev-server的hot属性
+			  使用webpack.HotModuleReplacementPlugin()
+		运行命令是 要用webpack-dev-server的
+
+	？？？？？？？？
+	问题：这一块， 和上面说的开发配置， 有什么区别？？？？？？？？？
+
+
+9. tree shaking
+	a. 移除JS上下文中的未引用代码(dead-code)
+	b. webpack2.0 内置支持未使用模块检测能力。
+	c. 新的 webpack 4 正式版本扩展了此检测能力，通过 package.json 的 "sideEffects" 属性作为标记，向 compiler 提供提示，表明项目中的哪些文件是 "pure(纯的 ES2015 模块)"，由此可以安全地删除文件中未使用的部分。
+
+	d. 在package.json中， 增加"sideEffects":fase, 来告诉webpack，可以安全地删除未使用的export。
+
+		"side effect(副作用)" 的定义是，在导入时会执行特殊行为的代码，而不是仅仅暴露一个 export 或多个 export。
+		如 polyfill，它影响全局作用域，并且通常不提供 export。
+		改为提供一个数组：
+		"sideEffects": [
+	    	"./src/some-side-effectful-file.js"
+	  	]，
+  		
+  		注意：所有导入文件都会受到 tree shaking 的影响。这意味着，如果在项目中使用类似 css-loader 并 import 一个 CSS 文件，则需要将其添加到 side effect 列表中，以免在生产模式中无意中将它删除。
+  			"sideEffects": [
+    			"./src/some-side-effectful-file.js",
+    			"*.css"
+  			]
+  	f. 在bundle里删除未使用的
+  		package.jsonj里的mode， 要改为“production"
+
+  		运行 tree shaking 需要 ModuleConcatenationPlugin。通过 mode: "production" 可以添加此插件。如果你没有使用 mode 设置，记得手动添加 ModuleConcatenationPlugin。
+
+  结论：在开发环境下， 可以通过设置
+  		a. package.json里的'sideEffects': false
+  		b. webpack.config.js里的 		
+  			'mode':'development',
+  			'optimization':{
+  				usedExports: true
+  			}
+  		但我自己在deveoplement模式下， 配置了a和b, math.js里的cube, square 都还是bundle里的。。。？？？？？???????????????
+
+  		在生产环境(mode: production), 启用 minification(代码压缩) 和 tree shaking。这时会内部调用ModuleConcatenationPlugin。
+  		也就是说，webpack在生产环境时， 会自动去掉dead-code
+
+10. 代码分离：
+	作用：
+		把代码分离到不同的bundle中，可按需或并行加载这些不同的bundle，获取更少bundle,控制资源加载优先级,这都是一些webpack的优化点：
+  		a. 代码分离： 入口起点+防止重复
+  		b. 动态异入：所需要modules动态引入 
+  		c. 预取，预加载模块： 增加module的加载，是和主chunk并行，还是等浏览器空下来再去加载 
+  	常用方法：
+  		1. 入口起点：即在entry中，拆成几个入口
+  			entry: {
+  				app: './src/index.js',
+  				other: './src/other.js'
+  			}
+  			缺点：重复的module.js会被重复打包
+  			demo里，index.js和other.js都import了lodash, npm run build后，app.bundle.js 和other.bundle.js都是1. 04M， 很大，引出了下面的防止重复
+
+  		2. 防止重复： SplitChunksPlugin
+  			entry: {
+  				app: './src/index.js',
+  				other: './src/other.js'
+  			},
+  			optimization: {
+  				splitChunks: {
+  					chunks: 'all'
+  				}
+  			}
+  			除了生成app.bundle.js（99k）， other.bundle.js(70k)外,多了一个vendors~app~other.bundle.js
+  			一些对代码分离相关的plugin:
+  			mini-css-extract-plugin:CSS从主程序分离插件
+  			bundle-loader:分离代码，延迟加载 
+  			promise-loader:类似上面那个， 但使用了promise API
+
+  		3. 动态导入
+  			利用webpack的import()
+  				在index.js中，  去掉import _ from 'lodash'
+  				用下面代码代替：
+  				function getComponent() {
+	  				return import(/* webpackChunkName: "lodash" */ 'lodash').then(({ default: _ }) => {
+						var element = document.createElement('div');
+						element.innerHTML = _.join(['Hello', 'webpack'], ' ');
+						return element;
+					}).catch(error => 'An error occurred while loading the component');
+				}
+				getComponent().then(component => {
+					document.body.appendChild(component);
+				})
+				详细看dynamicImportIndex.js
+				npm run build: 生成了app.bundle.js 和 vendors~lodash.bundle.js
+		4. 预取/预加载模块
+			webpack4.6及以上版本开始支持 preload, prefetch
+			在声明import时，使用
+			prefetch(预取): 将来可能需要用到某个组件时
+			preload(预加载): 当前组件下可能需要用到某个组件
+
+			二者区别：
+			加载顺序：preload在父chunk加载时，并行方式开始加载。
+					  prefetch在父chunk加载结束后开始加载。
+			优先级：preload中等优先级，并立即下载。
+					prefetch在浏览器闲置时下载。
+			请求时机：preload在父chunk中立即请求，用于当下时刻。
+					 prefetch会用于未来的某个时刻。
+			浏览器支持程度不同。
+
+		5. webpack分析工具：bundle 分析工具
+			a. webpack-chart:webpack stats 可交互饼图。
+			b. webpack-visualizer: 可视化分析bundle，检查模块占用空间，是否重复利用
+			c. webpack-bunlde-analyzer:一个 plugin 和 CLI 工具，它将 bundle 内容展示为便捷的、交互式、可缩放的树状图形式。
+			d. webpack bundle optimize helper:分析 bundle，并提供可改进措施建议，以减少 bundle 体积大小。
+
+11. 懒加载：也可叫按需加载
+	页面加载时，加载必须的module,有些需要用户操作，或是依赖某个操作，才会用到的module，就等用到前再加载 
+	比如例子中的print.js， 等用户点击后，才去加载 它，而不是一开始就在index.js中就import print from './print.js'
+
+	button.onclick = e => import (/* webpackChunkName: "print" */ './print').then(module => {
+		var print = module.default
+		print();
+	});
+
+	详看lazyLoadPrintIndex.js
+	npm run build: 生成了app.bunlde.js和vendors~app.bundle.js
+
+12. 缓存：
+	通过配置，使webpack生成的文件，能被浏览器缓存。文件内容变化后，又能请求到新的文件。
+	a. 输出文件的文件名： outfile.filename
+					filename: '[name].[hash].js',
+						通过带括号字符串来模板化文件名,如:
+						index.js ---> [name].[contenthash].js, 生成了index.7e2c49a622975ebd9b7e.js
+
+						我的例子里，[contenthash]报错，说用[hash],然后生成了app.9bf46b0ec3840350f766.js和vendors~main.9bf46b0ec3840350f766.js
+		a1. 把runtime提取出来：因为它可能会影响contenthash的变化
+			optimization: {
+				runtimeChunk: 'single'
+			}
+		a2: vendor chunk: 把vue, react等第三方，不常改的，提取出来
+			optimization: {
+				// 将runtime独立出来
+				runtimeChunk: 'single',
+				splitChunks: {
+					cacheGroups: {
+						vendor: {
+							// vendor取node_modules里的vender
+							test: /[\\/]node_modules[\\/]/,
+							// 命名为venders.js
+							name: 'vendors',
+							chunks: 'all'
+						}
+					}
+				}
+    		}
+    		会生成：app.40cff97e7a54dff1ee7b.js  	//entry入口生成的，将不含有来自node modules的vender了
+    				runtime.40cff97e7a54dff1ee7b.js  //runtimeChunk独立出来runtime
+    				vendors.40cff97e7a54dff1ee7b.js  //把vue等不常用 独立出来
+
+    	a3: 模块标识符(module identifier)：
+    		当在index.js中修改，引入print.js时
+    			app.1e....hash.js它的hash值发生了变化 ----> 这很正常
+    			runtime.1e...hash.js 的hash也变了
+    			venders.1e...hash.js 的hash也变了
+    			原因：app...随着自身内容变化，发生变化 
+    				  venders会随着自身的module.id的变化，而变化 
+    				  manifest会因为包含一个新模块的引用，而变化 
+    			如何让 venders不改变：
+    				a31. 使用NamedModulesPlugin
+    				a32. 使用HashedModuleIdsPlugin
+    					plugins: {
+    						new webpack.HashedModuleIdsPlugin()
+    					}
+
+    个人总结：缓存其实就是借助浏览器的缓存，让静态资源被缓存
+    	浏览器的缓存，就是针对文件名，加时间戳，版本号，助力服务器的强缓存和协商缓存
+    	webpack就是在打包出来的文件名上，来满足
+
+13. 创建一个webpack library:
+	编写一个webpack-number.js的类库，把0,1,2..互转zero, one ...，内部引用了lodash module。
+	webpack-number.js支持以下调用：
+		a. ES5 module import：
+			import * as webpackNumbers from 'webpack-numbers';
+			webpackNumbers.fn(...)
+
+		b. CommonJS module require
+			var webpackNumbers = require('webpack-numbers');
+			webpackNumbers.fn(...);
+
+		c. AMD
+			require(['webpackNumbers'], function ( webpackNumbers) {
+	  			// ...
+	  			webpackNumbers.wordToNum('Two');
+			});
+		d. html中的script标签
+			<script....></script>
+			 webpackNumbers.fn(...)
+
+	这个library的打包要支持以下：
+		a. 不能将lodash打包进来，而是让使用者自行去加载它。使用externals配置
+		b. library 的名称设置为 webpack-numbers
+		c. 将 library 暴露为一个名为 webpackNumbers 的变量
+		d. 能够访问其他 Node.js 中的 library
+
+		webpack的配置，详情查看webpackLibrary.config.js
+
+	要生成library的步骤：
+	1. 配置webpack， 查看webpackLibrary.config.js
+	2. 将library路径配置在package.json
+		{
+			...
+			"main": "dist/webpack-numbers.js"
+		}
+		或是
+		{
+			...
+			"module": "src/index.js"
+		}
+
+
+14. shim 预置依赖
+	针对 jquery这种 全局依赖的
+	另一种作用：polyfill可以浏览器支持ES6，将polyfill提供给需要提供的浏览器，而非所有浏览器
+	1. shim预设全局变量
+		利用ProvidePlugin  plugin
+		在demo的index.js， 去掉 import _ from 'lodash', 把lodash，放到全局变量里，直接使用
+		在webpack.config.js中
+		module.exports = {
+			...
+			plugins: [
+				new webpack.ProvidePlugin({
+					_: 'lodash'
+				})
+			]
+		}
+
+		1-1.可以使用 ProvidePlugin 暴露出某个模块中单个导出
+			如导出lodash中的 join, lodash
+			在webpack.config.js中配置：
+			module.exports = {
+				...
+				plugins: [
+					// 无论join方法在何处调用，都只会获取到 lodash 中提供的 join 方法
+					new webpack.ProvidePlugin({
+						join: ['lodash', 'join']
+					})
+				]
+			}
+			在使用时，_.join()，可以改为join()
+
+	2. 细粒度shim
+		2.1. 改变某个JS的this
+			可以使用import-loader
+			在webpack.config.js中
+			module.exports = {
+				...
+				// 让index.js中的this指向window
+				// 在commonjs中， this指向的是module.exports
+				module: {
+					rules: {
+						test: require.resolve('index.js'),
+						use: 'imports-loader?this=>window'
+					}
+				}
+			}
+
+	3. 全局exports
+		将全局变量作为一个普通模块来导出
+		globals.js如下：
+		var file = 'blah.txt';
+		var helpers = {
+  			test: function() { console.log('test something'); },
+  			parse: function() { console.log('parse something'); }
+		};
+		在webpack.config.js中
+		module.exports = {
+			...
+			module: {
+				rules: {
+					//将globlas.js中的file,导出为file
+					// 将globals.js中的helpers.parse导出为parse
+					{
+						test: require.resolve('globals.js'),
+						use: 'exports-loader?file,parse=helpers.parse'
+					}
+				}
+			}
+		}
+		可以这样使用了：
+		import { file, parse } from './globals.js'; ，
+
+	4. polyfill的最佳使用实践
+		看的有些粗，等状态好，再回去看一遍。
+
+		浏览器是否支持某个功能，不支持，则引入相应的polyfill
+		var modernBrowser = (
+			'fetch' in window &&
+			'assign' in Object
+		);
+		if ( !modernBrowser ) {
+			var scriptElement = document.createElement('script');
+			scriptElement.async = false;
+			scriptElement.src = '/polyfills.bundle.js';
+			document.head.appendChild(scriptElement);
+		}
+
+15. 渐进式网络应用程序 progressive web application PWA
+	PWA是一种可以提供类似于native app(原生应用程序) 体验的 web app(网络应用程序)
+	PWA，离线时应用程序能够继续运行功能。Service Worker的技术,使用workbox-webpack-plugin
+
+	在webpack.config.js配置如下，具体查看 webpack-PWA的demo
+	new WorkboxPlugin.GenerateSW({
+		// 这些选项帮助快速启用 ServiceWorkers
+		// 不允许遗留任何"旧的" ServiceWorkers
+		clientsClaim: true,
+		skipWaiting: true
+	})
+	在index.js中，注册了service worker  会生成service-worker.js和workbox-468c4d03.js, 前者是workboxPlugin插件， 后者是本机服务器停止后，仍能运行的原因所在。
+
+	npm run start， 运用http-server启本机服务器，停止server后，页面仍能正常运行哦。
+
+16. webpack集成typescript: 详细查看 typescript  demo
+	https://www.typescriptlang.org/
+	1. 安装 typescript 和 ts-loader: 
+		npm install --save-dev typescript ts-loader
+	2. 创建tsconfig.json: typescript配置文件
+		更多配置，可以查看：https://www.typescriptlang.org/docs/handbook/tsconfig-json.html
+
+		要使用sourcemap，需要在tsconfig.js中配置开启，同时也要在webpack.config.json中开启
+		{
+			...
+			"sourceMap": true,
+			...
+		}
+	3. webpack配置typescript
+		配置使用ts-loader
+	4. 使用第三方library
+		npm安装第三方library时，一定要安装此library的类型声明文件(typing definition)
+		如安装lodash时， npm install --save-dev @types/lodash
+		同时也要安装lodash npm install --save-dev lodash
+
+		可以在http://microsoft.github.io/TypeSearch/  查找相应的类型声明文件
+	5. 使用其它资源，如svg, css, sass, json等
+		创建custom.d.ts（名字custom可以自定义啊）,表示项目中TS的自定义类型，如
+		declare module "*.svg" {
+			const content: any,
+			export default content
+		},
+
+		需要在tsconfig.json中， include 这个custom.d.ts，
+
+	个人总结： 
+		1. 在custom.d.ts中， 把.css的declare去掉， 在index.ts中import index.css 一样能使用的
+		所以，是不是，已经不需要对静态资源这么操作了？？？？？
+		2. 在webpack.config.js中，使用 html-webpack-plugin, 如果不在tsconfig.json中, include自定义的custom.d.ts， html-webpack-plugin就会报错， any 类型报错。虽然custom.d.ts里没有任何.html的declare, include进来就不报错了 
+		3. 在使用第三方library时，要同时要求 @types/lodash, lodash, 不然import不到
+
+17. 环境变量:
+	webpack命令行中 -- env，是可以被webpack.config.js中访问的
+	CLI 中传入的任何参数会在配置文件webpack.config.js中映射为对应的参数。
+	如：
+	webpack --env.production  		// 设置 env.production == true
+		webpack --env prod 			// 环境变量设置为"prod"
+		webpack --env.prod 			// 环境变量设置为{prod: true}
+		webpack --env.prod=foo 		// 环境变量设置为{prod: foo}
+		webpack --env.prod --env.min // 环境 变量设置为{prod:true, min: true}
+	webpack --env.NODE_ENV=local
+
+	在webpack.config.js中要接收node 命令中的参数，所以要把 它exprot成一个function, 函数return为一个obj。
+	具体查看webpackEnv demo
+	我运行的命令： webpack --env.production --env.NODE_ENV=developer
+	console出来的是 env.production：true
+					env.NODE_ENV: developer
+
+
+18. webpack 性能优化：
+	1. loader优化：
+		用include指定特定的路径，从而减少遍历最少数量的模块。
+		rules:[
+			{
+        		test: /\.js$/,
+        		loader: 'babel-loader'
+      		}
+		]
+		上面代码：遍历了整个项目下，所有的.js文件
+		改为：
+		rules:[
+			{
+        		test: /\.js$/,
+        		include: path.resolve(__dirname, 'src'),
+        		loader: 'babel-loader'
+      		}
+		]
+		上面的代码：只对src下的.js进行操作
+	2. 启动时间：
+		每个loader，plugin都需要启动时间， 所以尽量减少使用工具
+	3. resolve相关的文件解析：
+		减少 resolve.modules, resolve.extensions, resolve.mainFiles, resolve.descriptionFiles 中 items 数量，因为他们会增加文件系统调用的次数。
+	4. 使用 DllPlugin 为更改不频繁的代码生成单独编译结果
+	5. 小就是快：
+		减少编译结果的 整体 大小， 保持chunk的小体积
+		a. 使用数量更少，体积更小的library.
+		b. 使用commonChunkPlugin,并开启async模式。
+		c. 移除未使用的代码
+		d. 编译正在开发，使用的代码
+	6. worker池：
+		thread-loader 可以将消耗资源很大的 loader 分流给一个 worker pool
+		thread是线程
+		不要使用太多的 worker，因为 Node.js 的 runtime 和 loader 都有启动开销
+	7. 持久化缓存：
+		使用cache-loader启动持久化缓存。
+		使用 package.json 中的 "postinstall" 清除缓存目录。
+	8. 开发环境的优化：
+		8-1. 关于watch: 使用webapck的watch node
+			而不是用其它工具watch文件和调用webpack。
+			内置的 watch mode 会记录时间戳并将此信息传递给 compilation 以使缓存失效。
+		8-2. 在内存中编译：而不是写入磁盘。
+			以下工具，是在内存中编译：
+				webpack-dev-server、webpack-hot-middleware、webpack-dev-middleware
+		8-3. 输出大量数据，请使用stats.toJson 来加速
+		8-4. devtool: 它的值设置，对性能有差异
+					"eval": 有最好的性能，但不转译代码
+					"cheap-source-map": 如果你接受稍差些的map质量，可用它。
+					"cheap-module-eval-source-map": 大多数下的最佳选择
+		8-5. 不要使用在生产环境下用的工具：
+			例如：在开发环境中，使用 TerserPlugin 来 minify和 mangle(混淆破坏) 代码是没有意义的。
+			以下工具，适合用在生产环境：
+			TerserPlugin、ExtractTextPlugin、[hash]/[chunkhash]、AggressiveSplittingPlugin、AggressiveMergingPlugin、ModuleConcatenationPlugin
+		8-6. ts-loader
+			typescript的loader,已经使用了内置的watch mode API。
+			experimentalWatchApi 与TypeScript watch mode 共享同样的逻辑，在开发环境非常稳定。
+			开启 transpileOnly，用于真正快速增量构建。
+			ts-loader 文档建议使用 cache-loader，但它是使用硬盘写入，而减缓增量构建速度。
+			推荐使用ts-loader的配置：
+			{
+				...
+				modules: {
+					rules: [
+						{
+							test: /\.tsx?$/,
+							use: [
+								{
+							    	loader: 'ts-loader',
+							      	options: {
+							        	transpileOnly: true,
+							        	experimentalWatchApi: true,
+							      	},
+							    },
+							]
+						}
+					]
+				}
+
+			}
+	9. 输出结果不要带路径信息：
+		webpack会在输出的bundle中生成路径信息。
+		在打包数千个模块的项目中，bundle中的路径信息，会造成垃圾回收性能压力。
+		在output.pathinfo设置为false关闭它。
+		{
+			mode: '',
+			entry....
+			output:{
+				...
+				pathinfo: false,
+				...
+			}
+			...
+		}
+	10. node版本对性能的影响：
+		最新node版本及ES2015 Map Set的实现，出现一些性能的回退。
+		虽然其修复版已合至master，但有些以前，已发布的版本，没有合并修改版。
+		使用 8.9.x 版本（8.9.10 - 9.11.1 之间的版本存在性能问题）
+	11. 生产环境中的优化：
+		11-1：多个 compilation(编译时) 
+			  以下工具有用：
+			  parallel-webpack: 它允许workder池中运行compilation。
+			  cache-loader: 可在多个compilation间共享缓存。
+		11-2: 尽量不使用source map
+	12. 某些工具可能会降低性能：
+		12-1: babel： 
+			尽可能最小化项目中的 preset/plugins 数量。
+		12-2：ts-loader:
+			在单独的进程中使用 fork-ts-checker-webpack-plugin 进行类型检查
+			配置 loader 跳过类型检查
+			使用 ts-loader 时，设置 happyPackMode: true / transpileOnly: true
+		12-3: sass
+			node-sass 中有个来自 Node.js 线程池的阻塞线程的 bug。 
+			当使用 thread-loader 时，需要设置 workerParallelJobs: 2。
+
+19. 内容安全策略:
+	需要更深入的查找材料来看下？？？？？？
+
+20. 管理依赖：
+
+21. 公共路径
+
+22. 集成：
+	webpack 只是一个模块打包工具(module bundler)
+	Grunt， gulp 是一个任务执行工具(tast runner)
+	任务执行工具用来自动化处理常见的开发任务，例如，lint(代码检测)、build(构建)、test(测试)
+	webpack可与以下工具集成使用：
+		npm script: 在package.json中使用script
+		grunt: grunt-webpack webpack
+		gulp: webpack-stream
+		mocha: mocha-webpack
+		karma: karma-webpack
+
+
+23. bundle-loader:
+	用来在运行时，异步加载 模块的loader
+	在demo bundleloader中，没能懂以下二点：
+		1. npm run build时， 生成了print.bundle.js 和 2.bundle.js
+				问：后者是怎么生成的？
+				答：2.bundle.js是在 index.js中的var waitForChunk = require("bundle-loader!./print.js");  这句话生成的
+		2. 在index.js中， 到底要怎么去使用bundle-loader require后，回调函数中这个file的各个方法
+			console.log(file)，看不出什么来
+		3.起本机服务后，index.html里，已经是把三个js都加载了
+
+
+
