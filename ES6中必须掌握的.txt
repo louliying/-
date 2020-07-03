@@ -848,4 +848,48 @@
 			await: 可以是promise对象
 					可以是原始类型的值，但会自动转成立即 resolved 的 Promise 对象
 		d. async返回值是promise对象
+	15-2： 一个async例子：
+		指定时间后操作什么：
+		function timeout (ms) {
+			// 立即 返回一个promise实例
+			return new Promise((resolve, reject) => {
+				// ms 毫秒后， 执行resolve
+				setTimeout(resolve, ms);
+			})
+		}
+
+		async function asyncConsole (msg, ms) {
+			// 等timeout()函数，结束
+			// timeout函数，其实就是等ms 毫秒后， 支持resolve， 结束promise的pending
+			await timeout(ms);
+			// 上面那句执行结束 了，才能运行console
+			console.log('我等了' + ms + 'ms,才能显示：' + msg );
+		}
+		asyncConsole('Who am I?', 3000);
+
+	15-3: async函数的定义 
+		a. 函数申明：
+			async function fn() {....}
+		b. 函数申明：
+			const fn = async funciton(){...}
+		c. 对象方法：
+			let obj = {
+				async fn () {
+					...
+				}
+			}
+		d. Class的方法
+			class Demo {
+				constructor () {
+					...
+				}
+				async fn () {
+					....
+				}
+			}
+			var d = new Demo();
+			d.fn().then()
+		e.箭头函数
+			const fn = async () => {...}
+
 			
