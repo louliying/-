@@ -864,8 +864,10 @@
 			await timeout(ms);
 			// 上面那句执行结束 了，才能运行console
 			console.log('我等了' + ms + 'ms,才能显示：' + msg );
+			// async函数内的return ，将做then回调函数的参数
+			return 'cindy';
 		}
-		asyncConsole('Who am I?', 3000);
+		asyncConsole('Who am I?', 3000).then(res => console.log(res));
 
 	15-3: async函数的定义 
 		a. 函数申明：
@@ -891,5 +893,27 @@
 			d.fn().then()
 		e.箭头函数
 			const fn = async () => {...}
+
+	15-4: 语法 ：
+		1. async 函数返回的是Promise实例对象
+			async函数内部的return语句，将做为then 回调方法的参数
+			async function f() {
+			  	return 'hello world';
+			}
+
+			f().then(v => console.log(v)); 	// hello world
+
+
+			async函数内部抛出错误，会导致返回的 Promise 对象变为reject状态。
+			抛出的错误对象会被catch方法回调函数接收到。
+			async function f() {
+  				throw new Error('出错了');
+			}
+
+			f().then(
+  				v => console.log(v),
+  				e => console.log(e)
+			)
+			// Error: 出错了
 
 			
