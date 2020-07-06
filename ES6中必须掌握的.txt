@@ -916,4 +916,16 @@
 			)
 			// Error: 出错了
 
+		2. async函数里，所有的await 后面的promise都执行了， promise才会发生状态变化， 才能执行then()。
+			除非遇到return语句或者抛出错误。
+			也就是说， 除非有return或抛错， 不然， 所有await都执行完， 才会执行then
+			async function getTitle(url) {
+  				let response = await fetch(url);
+  				let html = await response.text();
+  				return html.match(/<title>([\s\S]+)<\/title>/i)[1];
+			}
+			getTitle('https://tc39.github.io/ecma262/').then(console.log);
+			只有fetch, html=,   return 三句话都执行了， 才会执行then。
+
+
 			

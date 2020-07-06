@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+	<meta http-equiv="X-UA-Copatible" content="ie=edge">
+	<title>canvas 压缩图片</title>
+</head>
+<body>
+	<input type="file" name="" id="file" />
+	<script>
+		document.getElementById('file').addEventListener('change', function(e){
+			let fileObj = e.target.files[0];
+			console.log('fileObj111:', fileObj);
+			let that = this;
+			compressFile(fileObj, function(files){
+				console.log("222:", files);
+				that.value = '';
+			})
+		});
+
+		/*
+			// file input 获取到的文件
+			// callback 回调函数，压缩完要做的事
+		*/
+		function compressFile(file,  callback) {
+			console.log('file 333:', file);
+			let fileObj = file;
+			let  reader = new FileReader();
+			// 转成base64
+			reader.readAsDataURL(fileObj);
+
+			reader.onload = function (e) {
+				// 新建一个img标签
+				let  image = new Image();
+				image.src = e.target.result;
+				console.log('image.src 444:', e.target.result);
+				document.body.appendChild(image);
+				image.onload = function () {
+					// 新建一个canvas对象
+					let  canvas = document.createElement('canvas'),
+						context = canvas.getContext('2d'),
+						// 压缩后图片的宽
+						imageWidth = image.width / 2,
+						imageHeight = image.height / 2,
+						data = '';
+					canvas.width = imageWidth;
+					canvas.height =  imageHeight;
+					context.drawImage(image, 0, 0, imageWidth, imageHeight);
+					// 输出压缩后的 base64
+					data = canvas.toDataURL('image/jpeg');
+					console.log('data 555:', data);
+					let arr = data.split(','),
+						// 转成blob
+						mime = arr[0].match(/:(.*?);/)[1],
+						bstr = atob(arr[1]),
+						n = bstr.length,
+						u8arr = new Uint8Array(n);
+					while(n--) {
+						u8arr[n] = bstr.charCodeAt(n);
+					}
+					// 转成file
+					let files = new window.File([new Blob([u8arr], {type: mime})], 'test.jpeg', {type: 'image/jpeg'});
+					console.log('files 666:', files);
+					callback(files);
+				}
+			}
+		}
+	</script>
+</body>
+</html>

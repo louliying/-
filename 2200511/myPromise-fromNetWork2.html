@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+	<meta http-equiv="X-UA-Copatible" content="ie=edge">
+	<title>手写一个Promise</title>
+</head>
+<body>
+	<script>
+		function Promise (executor) {
+			let _this = this;
+			_this.status = 'pending';
+			_this.value = undefined;
+			_this.reason = undefined;
+
+			_this.onResolvedCallbacks = [];
+			_this.onRejectedCallbacks = [];
+			function resolve(value) {
+				if (_this.status === 'pending') {
+					_this.status = 'resolved';
+					_this.value = value;
+					_this.onResolvedCallbacks.forEach(fn => fn());
+				}
+			}
+			function reject (error) {
+				if (_this.status === 'pending') {
+					_this.status = 'rejected';
+					_this.reason = error;
+					_this.onRejectedCallbacks.forEach(fn => fn());
+				}
+			}
+			// 当new Promise抛出异常时，这时status还是pending,
+			// 让其走 reject，状态 改为rejected
+			try {
+				executor(resolve, reject);
+			}catch(err) {
+				reject(err);
+			}
+		}
+		/*
+			// 1. 为了链式调用，不管哪个状态，都需要返回一个新的Promise才能继续, 所以需要一个promise2去接，然后返回
+			// 2. 原生Promise的then中，无论是成功/失败的回调，只要返回了结果，就会进入下一个then的成功回调。如果有异常会进入下一个then的失败回调
+			// 3. 原生Promise执行then方法，有时会返回一个结果，作为上一个promise的值value或失败的原因reason。这个结果是一个普通值，也可能是一个Promise实例
+			// 实现上面的效果，引入了resolvePromise()
+
+			// 4. 在then中， 可以什么也不做，直接穿透到下一个then， 所以要在then中， 对接收的参数infulfilled, inrejected进行容错处理
+			// 对于infulfilled, 有就用原参数，没有就给个默认的函数
+			// 对于inrejected， 没有就抛出异常
+			// p1.then().then().then((data) => {
+				console.log(data);
+			})
+
+			//5. promise规范中， 要求所有的infulfilled, inrejected 都要异步执行，所以给所有的infulfilled, inrejected加上setTimeout
+
+		*/
+		Promise.prototype.then = function (infulfilled, inrejected) {
+			let _this = this;
+			// 1.返回一个新的promise
+			let promise2;
+
+			// 4. 对infulfilled, inrejected进行容错处理，针对什么也没传的then()，让其继续下去
+			infulfilled = infulfilled && typeof infulfilled === 'function' ? infulfilled : function (val) {return val;}
+			inrejected = inrejected && typeof inrejected === 'function' ? inrejected : function (err) {
+				throw err;
+			}
+
+			if (_this.status === 'resolved') {
+				console.log('11')
+				promise2 = new Promise((resolve, reject) => {
+					// 5.promise规范中， 要求所有的infulfilled, inrejected 都要异步执行，
+					setTimeout(() => {
+						try {
+							// 3. x可能是一个普通值，也可能是一个promise
+							let x = infulfilled(_this.value);
+							// 这里的resolve和reject 都是promise2的
+							resolvePromise(promise2, x, resolve, reject);
+						} catch (err) {
+							reject(err);
+						}
+					})
+					
+				});
+			}
+			if (_this.status === 'rejected') {
+				promise2 = new Promise((resolve, reject) => {
+					// 5.promise规范中， 要求所有的infulfilled, inrejected 都要异步执行，
+					setTimeout(() => {
+						try {
+							// 3. x可能是一个普通值，也可能是一个promise
+							let x = inrejected(_this.reason);
+							resolvePromise(promise2, x, resolve, reject);
+						} catch(err) {
+							reject(err);
+						}
+					})
+					
+				});				
+			}
+			// 在then里，让pending状态的，重新回到callback队列里，不立即执行。就达到了等异步的目的
+			if (_this.status === 'pending') {
+				promise2 = new Promise((resolve, reject) => {
+					_this.onResolvedCallbacks.push(() => {
+						setTimeout(() => {
+							try {
+								// 3. x可能是一个普通 值 ， 也可能是一个promise
+								let x = infulfilled(_this.value);
+								resolvePromise(promise2, x, resolve, reject);
+							}catch (err) {
+								reject(err);
+							}
+						});						
+					});
+					_this.onRejectedCallbacks.push(() => {
+						setTimeout(() => {
+							try {
+								let x = inrejected(_this.reason);
+								resolvePromise(promise2, x, resolve, reject);
+							} catch(err) {
+								reject(err);
+							}
+						})
+						
+					});
+				});				
+			}
+			return promise2;
+		}
+
+		/*
+			// 参数promise2: 新的promise实例
+			// 参数 curVal: then 中返回的结果
+			// resolve: promise2的resolve
+			// reject: promise2的 reject 
+			//1. 原生Promise中then返回的结果，可能是他本身，
+					这种情况永远不会成功/失败，会抛出一个类型错误的异常
+			// 2. curVal,即上一次then中返回的值
+					是不是一个promise： 是object, 且有then方法
+				2.1. 如果不是promise: 普通值，直接resolve
+				2.2. 如果是promise,
+		*/
+		function resolvePromise (promise2, curVal, resolve, reject) {
+			// 情况1，then中返回的值是他本身
+			if (promise2 === curVal && curVal !== undefined) {
+				reject(new TypeError('类型错误'));
+			}
+			// 可能是个promise
+			if (curVal!== null && (typeof curVal === 'object' || typeof curVal === 'function')) {
+				// 为了防止then:11, 这种， 有then，但then下不是fn
+				/*try {
+
+				}*/
+				let then = curVal.then;
+				if (typeof then === 'function') {
+					// 调用  curVal的then方法
+					then.call(curVal, function(y) {
+						// y可能还是一个promise，递归它，直到返回一个普通值
+						resolvePromise(promise2, y, resolve, rejected);
+					}, function(err) {
+						reject(err);
+					})
+				} else {
+					// 如果 then 不是函数，直接resolve
+					resolve(curVal)
+				}
+			} else {
+				// 说明是个普通值
+				resolve(curVal);
+			}
+		}
+
+		let p = new Promise(function (resolve, reject) {
+			resolve(1000)
+		})
+		p.then().then().then(function (data) {
+			console.log(data, 'resolve');
+		}, function (error) {
+			console.log(error, 'reject');
+		})
+
+	</script>
+</body>

@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+	<meta http-equiv="X-UA-Copatible" content="ie=edge">
+	<title>JS 停止CSS3动画</title>
+	<style type="text/css">
+		*{
+			margin: 0;
+			padding: 0;
+		}
+		.sun{
+			width: 100px;
+			height: 100px;
+			background-image: radial-gradient(red, #e0d6a1);
+			border-radius: 50%;
+		}
+		.ground {
+			width: 100%;
+			height: 5px;
+			background: rgb(100, 233, 120);
+			margin-top: 276px;
+			box-shadow: 2px 4px 5px #888;
+		}
+		.ball {
+			width: 30px;
+			height: 30px;
+			background: #f00;
+			border-radius: 50%;
+			position: absolute;
+			top:375px;
+			left: 10px;
+			box-shadow: 2px 4px 5px  #888;
+			animation: gogo 10s infinite;
+		}
+		@keyframes gogo {
+			0{
+				left: 10px;
+				background: #f00;
+			}
+			50% {
+				left: 98%;
+				background: #6edcd7;
+			}
+			100% {
+				left: 0;
+				background: #d67d7d;
+			}
+
+		}
+	</style>
+</head>
+<body>
+	<div class="sun"></div>
+	<button onclick="start()">开始</button>
+	<button onclick="stop()">停止</button>
+	<div class="ball"></div>
+	<div class="ground"></div>
+	<script>
+		function stop () {
+			document.getElementsByClassName('ball')[0].style.animationPlayState = 'paused';
+			
+		}
+		function start () {
+			document.getElementsByClassName('ball')[0].style.animationPlayState = 'running';
+			
+		}
+	</script>
+
+
+	<hr />
+	<p></p>
+	<p></p>
+	<p></p>
+	<p></p>
+	<p></p>
+	<p></p>
+	<p></p>
+	<style type="text/css">
+		p{
+			padding: 20px 0;
+		}
+		#div{
+			width: 100px;
+			height:100px;
+			line-height: 100px;
+			text-align: center;
+
+			background:#f60;
+			margin:100px auto;
+			border-radius: 50%;
+			animation:go 4s ease;
+		}
+		@keyframes go{ 
+			0{
+				background: #f00;
+				transform: scale(1);
+				transform: rotate(0);
+			}
+			50% {
+				background: #6edcd7;
+				transform: scale(2);
+				transform: rotate(180deg);
+			}
+			100% {
+				background: #d67d7d;
+				transform: scale(1);
+				transform: rotate(360deg);
+			}
+
+		}
+	</style>
+	<div id="div">看我</div>
+	<script>
+		var tt = document.querySelector('#div'); 
+		
+		tt.addEventListener("webkitAnimationEnd", function(){ //动画结束时事件 
+			console.log(22);		 
+		}, false); 
+	</script>
+</body>

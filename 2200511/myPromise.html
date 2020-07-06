@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+	<meta http-equiv="X-UA-Copatible" content="ie=edge">
+	<title>手写一个Promise</title>
+</head>
+<body>
+	<script>
+		function MyPromise (exector){
+			var _this = this;
+			this.state = 'pending';
+
+			this.data = '';
+			this.errReason = '';
+			this.onResolveFnArr = [];
+			this.onRejectFnArr = [];
+
+			function resolve(data) {
+				if (_this.state === 'pending') {
+					_this.state = 'resolve';
+					_this.data = data;
+					_this.onResolveFnArr.forEach((fn) => fn())
+				}
+			}
+
+			function reject(reason) {
+				if (_this.state === 'pending') {
+					_this.state = 'reject';
+					_this.errReason = reason;
+					_this.onRejectFnArr.forEach((fn) => fn());
+				}
+			}
+			try{
+				exector(resolve, reject);
+			}catch(err) {
+				reject(err);
+			}
+		}
+
+		MyPromise.prototype.then = function(onResolved, onRejected) {
+			var _this = this;
+			/*if (_this.state === 'resolve') {
+				onResolved(_this.data);
+			}
+			if (_this.state === 'reject') {
+				onRejected(_this.errReason);
+			}
+			if (_this.state === 'pending') {
+				// 只推入函数，会让then的resolved没有参数了
+				// _this.onResolveFnArr.push(onResolved);
+				_this.onResolveFnArr.push(() => {
+					onResolved(_this.data);
+				});
+				_this.onRejectFnArr.push(() => {
+					onRejected(_this.errReason);
+				})
+			}*/
+			// 让then可以链接调用, 每个操作都是返回一个新的promise实例 
+			if (_this.state === 'resolve') {
+				return new MyPromise((resolve, reject) => {
+					onResolved(_this.data);
+				})
+			}
+			if (_this.state === 'reject') {
+				return new MyPromise((resolve, reject) => {
+					onRejected(_this.errReason);
+				})
+			}
+			if (_this.state === 'pending') {
+				return new MyPromise((resolve, reject) => {
+					_this.onResolveFnArr.push(() => {
+						onResolved(_this.data)
+					});
+					_this.onRejectFnArr.push(() => {
+						onRejected(_this.errReason);
+					})
+				})
+			}
+		}
+
+		// 我这个最后的then 66的那行，没有运行
+		let promise1 = new MyPromise((resolve, reject) => {
+			console.log('11');
+			setTimeout(() => {
+				if(Math.random() > 0.5) {
+					console.log('22-1');
+		            resolve('成功');
+		        } else {
+		        	console.log('22-2');
+		            reject('失败');
+		        }
+			}, 300); 
+		});
+		let promise2 = promise1.then((data) => {
+			console.log('33:', data);
+			setTimeout(() => {
+				console.log('44');
+			}, 0);
+		}, (err) => {
+			console.log('55:', err);
+		}).then(() => {
+			console.log('66');
+		});
+
+		//原始的Promise
+		/*let promise3 = new Promise((resolve, reject) =>{
+			setTimeout(() => {
+				if (Math.random() > 0.5) {
+					console.log('a1-1');
+					resolve('sucess');
+				} else {
+					console.log('a1-2');
+					reject('error');
+				}				
+			}, 0);
+		});
+		promise3.then((res) => {
+			console.log('b2-1:', res);
+		}, (err) => {
+			console.log('b2-2:', err);
+		}).then(() => {
+			console.log('c3');
+		}).then(() => {
+			console.log('c4');
+		})*/
+		
+	</script>
+</body>

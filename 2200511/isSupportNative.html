@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+	<meta http-equiv="X-UA-Copatible" content="ie=edge">
+	<title>浏览器是否支持某些ES6功能</title>
+</head>
+<body>
+	<script>
+		function isNative(api) {
+			// Promoise.toString()     返回的是：function Promise() { [native code] }
+			// window[api]， 已经是 api.toString()  返回的事Promise() { [native code] }
+			var oApi = window[api] || false;
+			console.log('oApi:', window[api]);
+			if (oApi) {
+				// 说明是支持的
+				console.log('00:', oApi);
+				console.log('11:', /native code/.test(oApi));				
+				return /native code/.test(oApi);
+				// return /native code/.test(api.toString()) && typeof api !== 'undefined';
+			}
+			return false;			
+		}
+		var res1 = isNative('Promise');
+		console.log('res1 :', res1);
+	</script>
+</body>
