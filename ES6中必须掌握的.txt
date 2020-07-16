@@ -1016,3 +1016,344 @@
 			};
 			b()运行的时候，a()是暂停执行，上下文环境都保存着。一旦b()或c()报错，错误堆栈将包括a()。
 			
+
+16. class
+	16-1. 基础知识点：
+		类的prototype.constructor  指向类本身
+		类内定义的所有方法，都是挂载在类的prototype上的。
+		class P{
+			constructor () {...}
+			fn1 (){...}
+			fn2 () {....}
+		}
+		====>
+		P.prototype = {
+			constructor () {},
+			fn1 () {},
+			fn2 () {}
+		}
+
+		类的内部所有定义的方法，都是不可枚举的（non-enumerable)
+		Object.keys(P.prototype)		// []
+		Object.getOwnPropertyNames(P.prototype)		// ["constructor","fn1", "fn2"]
+
+	16-2: constructor()
+		new 实例化时， 会被自动调用。
+		如果没有定义，会默认生成一个空的constructor方法
+
+		constructor方法内部，默认返回实例对象，即 this 
+
+	16-3: 实例属性， 原型属性
+		直接挂在实例上的属性，即定义this上的， 为实例属性
+			Class P {
+				construtor (x, y) {
+					this.x = x;
+					this.y = y;
+				}
+			}
+		挂在原型上的属性， 即定义在class上的，为原型属性。
+			Class P {
+				getName () {
+					...
+				}
+			}
+			getName 就是定义在class上， 即定义在P.prototype上的
+
+
+	16-4： __proto__
+		它不是JS本身的属性。
+		是各大浏览器厂商添加的私有属性， 很多JS引擎中，都提供了这个属性的访问，但不推荐属性。
+
+		它是在实例对象上的
+		var p1 = new P(6,8);
+		var p2 = new P(6,8);
+		p1.__proto__ 和 p2.__proto___是相等的， 都指向P.prototype
+
+		Object.getPrototypeOf(p1);   /// P.prototype
+
+	16-5： 取值函数，存值函数
+		set,get对类内的属性设置值和取值
+		class ClassName {
+			...
+			get propName () {
+				return this.prop;
+			}
+			set propName (val) {
+				this.propp += val;
+			}
+		}
+		var p = new ClassName();
+		p.prop = 'cindy';
+		...
+
+		存值函数和取值函数是设置在属性的 Descriptor 对象上的。
+	16-6: 类的属性名， 可以表达式：
+		let methodName = 'getArea';
+
+		class Square {
+  			constructor(length) {
+    			// ...
+  			}
+  			// 方法名为getArea
+  			[methodName]() {
+    			// ...
+  			}
+		}
+	16-7: class表达式
+		const MyClass = class Me {
+  			getClassName() {
+    			return Me.name;
+  			}
+		};
+		Me只在类内部可用
+		MyClass 对外部可用
+
+		const MyClass = class { /* ... */ };
+
+		let person = new class {
+  			constructor(name) {
+    			this.name = name;
+  			}
+  			...
+  		}
+  	16-8：注意点：
+  		1. 严格模式：类和模块内部 ，默认就是严格模式
+  					考虑到未来所有的代码，其实都是运行在模块之中，所以 ES6 实际上把整个语言升级到了严格模式。
+  		2. 类不存在变量提升
+  			new P();		//这里会报错
+  			class P {
+  				....
+  			}
+
+  			这种规定的原因与下文要提到的继承有关，必须保证子类在父类之后定义。
+  		3. class的name
+  			ES6的类，其实是封装了ES5的构造函数， 所以函数的很多特性继承了。
+  			Class P {
+  				...
+  			}
+  			P.name   // P
+  		4. this指向
+  			类的方法内部如果含有this，它默认指向类的实例
+
+  			改变this
+  			a. 在构造函数内指定this
+  				class Logger {
+  					constructor() {
+    					this.printName = this.printName.bind(this);
+  					}
+  					...
+  				}
+  			b. 箭头函数
+  				class Obj {
+  					constructor() {
+    					this.getThis = () => this;
+  					}
+				}
+				箭头函数内部的this总是指向定义时所在的对象
+			c. 解决方法是使用Proxy，获取方法的时候，自动绑定this
+				function selfish (target) {
+  					const cache = new WeakMap();
+  					const handler = {
+    					get (target, key) {
+      						const value = Reflect.get(target, key);
+      						if (typeof value !== 'function') {
+        						return value;
+      						}
+      						if (!cache.has(value)) {
+        						cache.set(value, value.bind(target));
+      						}
+      						return cache.get(value);
+    					}
+  					};
+  					const proxy = new Proxy(target, handler);
+  					return proxy;
+				}
+
+				const logger = selfish(new Logger());
+
+
+	16-7: 静态方法：
+		在类里， 用static表示的方法
+		a. 静态方法，是挂载在类本身的，而非类的原型链上。 所以不会被类实例继承。
+			class Foo {
+	  			static classMethod() {
+	    			return 'hello';
+	  			}
+			}
+			Foo.classMethod();
+
+		b. 如果静态方法包含this关键字，这个this指的是类，而不是实例。
+			class Foo {
+	  			static bar() {
+	    			this.baz();
+	  			}
+	  			static baz() {
+	    			console.log('hello');
+	  			}
+	  			baz() {
+	    			console.log('world');
+	  			}
+			}
+			Foo.bar() // hello
+
+		c. 父类的静态方法，可以被子类继承。挂载在子类上，而非子类原型链上
+			class Foo {
+  				static classMethod() {
+    				return 'hello';
+  				}
+			}
+			class Bar extends Foo {
+			}
+			Bar.classMethod() // 'hello'
+		d. 静态方法， 可以用super.staticMethod来调用。
+			只在能静态方法里调用 哦
+			class Bar extends Foo {
+  				static classMethod() {
+    				return super.classMethod() + ', too';
+  				}
+			}
+
+	16-8： 类属性的新写法
+		类的属性，可以不定义 在构造函数中。直接定义在类的内部的顶层，不需要加this。
+		class foo {
+  			bar = 'hello';
+  			baz = 'world';
+
+  			constructor() {
+    			// ...
+  			}
+		}
+
+	16-9：静态属性：
+		类上的属性。
+		class Foo {
+			...
+		} 
+		Foo.name = 'aa';
+		目前 只有这样定义， 不能定义在类内部
+
+	16-10： 私有方法，私有属性：
+		私有方法和私有属性，是只能在类的内部访问的方法和属性，外部不能访问。
+		ES6 不提供，只能通过变通方法模拟实现。
+
+17. class继承
+	17-1. 基本用法：
+		extends , super
+		class A1 extends A{
+			constructor (a,a1) {
+				super(a);
+				this.a1 = a1;
+			}
+		}
+		extneds: A1 继承A
+		a. 子类必须在constructor方法中调用super方法, 如果子类没有显示定义contructor()，会默认生成。
+			因为，子类自己的this对象，必须先通过父类的构造函数完成塑造，得到与父类同样实例属性和方法，然后才会其进行加工。再加上自己的属性和方法。
+		b. 子类构造函数中， 必须先调用super()后， 才能用this来给自己定义属性，不然 会报错。
+		c. 父类的静态方法，也会被子类继承
+
+		ES5的继承， create()。 实质是先创造子类的实例对象this，然后再将父类的方法添加到this上面（Parent.apply(this)）。
+		ES5的继承，实质是先将父类实例对象的属性和方法，加到this上面（所以需先调用super），再用子类的构造函数修改this。
+
+	17-2. super 关键字
+		既可以是函数，也可以是属性。
+		函数： 代码父类的构造函数，
+			   只能用在子类的构造函数中，不然会报错。
+		class A1 extends A {
+			constructor () {
+				super();
+				// super内部的this指向了A1
+				// 这里等于A.prototype.constructor.call(this);
+			}
+		}
+
+		对象： 在普通方法中，指向父类的原型对象
+			   在静态方法中，指向父类
+
+		1). 普通函数：
+			class A {
+			 	constructor() {
+			 		this.a =2;
+			 	}
+			 	p () {
+			 		return 2;
+			 	}
+			}
+			class B extends A {
+			 	constructor () {
+			 		super();
+			 		super.p();	// 2
+			 		// p是A原型上的方法
+			 		// A.prototype.p()
+			 		super.a;	// 是调用 不到a的 
+			 	}
+			}
+
+			a. super指向父类的原型，所以不能调用父类实例上的方法和属性， 即A构造函数内的属性
+			b. ES6 规定， 子类普通方法中通过super属性，调用父类方法时，方法内部的this指向子类实例。
+			 	class A {
+  					constructor() {
+    					this.x = 1;
+  					}
+  					print() {
+    					console.log(this.x);
+  					}
+				}
+
+				class B extends A {
+  					constructor() {
+    					super();
+    					this.x = 2;   // 重置了x
+  					}
+  					m() {
+    					super.print();
+    					// 相当于 A.prototype.print.call(this)
+  					}
+				}
+
+				let b = new B();
+				b.m() // 是2,而一是1
+			c. 由于this指向子类实例，所以如果通过super对某个属性赋值，这时super就是this，赋值的属性会变成子类实例的属性。
+				class B extends A {
+  					constructor() {
+    					super();
+    					this.x = 2;
+    					super.x = 3;  // 等同于this.x = 3
+    					console.log(super.x);
+    					// undefined
+    					// 等同于A.prototype.x
+    					console.log(this.x); // 3
+  					}
+				}
+		2). 静态方法
+			在子类的静态方法中通过super调用父类的方法时，方法内部的this指向当前的子类，而不是子类的实例。
+			class A {
+  				constructor() {
+    				this.x = 1;
+  				}
+  				static print() {
+    				console.log(this.x);
+  				}
+			}
+
+			class B extends A {
+  				constructor() {
+    				super();
+    				this.x = 2;
+  				}
+  				static m() {
+    				super.print();
+    				// 等同于
+    				// A.print.call(B)
+    				// 这个方法的this指向B，而不是B的实例
+  				}
+			}
+
+			B.x = 3;
+			B.m() // 3
+
+			
+		使用super的时候，必须显式指定是作为函数、还是作为对象使用，否则会报错。
+
+		由于对象总是继承其他对象的，所以可以在任意一个对象中，使用super关键字。
+
+

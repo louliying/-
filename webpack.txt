@@ -608,3 +608,47 @@
 
 
 
+
+
+
+
+webpack性能分析工具：(1.2属于体积分析)
+	以下是体积的分析
+	1. http://webpack.github.io/analyse/ : 上传你的 stat.json
+			stat.json的快速生成：  webpack --profile --json > stats.json
+
+	2. webpack-bundle-analyzer module：  webpack的一个plugin
+		在webpack.common.js中：
+		// config/webpack.common.js
+		const { BundleAnalyzerPlugin } = require('webpack-bundle-analyzer');
+
+		const commonConfig = {
+  			// ...
+  			plugins: [
+    			new BundleAnalyzerPlugin({
+      				analyzerPort: 8889, // 指定端口号
+      				openAnalyzer: false,
+    			}),
+  			]
+  			// ...
+		}
+
+	以下 速度的分析：
+	3. speed-measure-webpack-plugin： webpack的一个plugin
+			分析整个打包的总耗时，以及每一个loader 和每一个 plugins 构建所耗费的时间
+
+			// config/webpack.common.js
+			const SpeedMeasurePlugin = require("speed-measure-webpack-plugin");
+			const smp = new SpeedMeasurePlugin();
+			// ...
+			module.exports = (production) => {
+			  if (production) {
+			    const endProdConfig = merge(commonConfig, prodConfig);
+			    return smp.wrap(endProdConfig);
+			  } else {
+			    const endDevConfig = merge(commonConfig, devConfig);
+			    return smp.wrap(endDevConfig);
+			  }
+			};
+
+

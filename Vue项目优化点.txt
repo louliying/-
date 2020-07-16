@@ -1,0 +1,63 @@
+1. v-if , 还是v-show
+	v-if 操作dom，dom渲染还是不渲染
+	v-show 操作css 的 display
+	只有频繁显示隐藏dom的会用v-show, 一般都会用v-if
+
+
+2. v-for和v-if 不要一起用
+	v-for的优先及比v-if高， 所以对于一起用于，v-for渲染当前列表，每次都要v-if判断一遍，相应的列表可能也会更新。
+	可以先把绑定给v-for的数据，用 computed计算一遍， 把v-if的值 过滤
+
+
+3. v-for中， 不要用index作为下标：
+	用index作为下标，如果只增加一条记录， 后面的数据的key全都要改一遍，造成新旧数据不一致，而需要重新渲染。
+
+	可以用数据里的唯一标识，如id来 作为key
+
+4. 记得释放组件的资源：
+	组件销毁后， 尽量把资源块销毁。
+	比如，计时器，addEventListener ，这些不手动销毁， 会一直占用资源
+	beforeDestroy() {
+  		removeEventListener('click', Function false);
+  		clearInterval(this.currentInterVal);
+	}
+
+5. 长列表：
+	v-for长列表, 随着数据的加载，DOM会越来越多, 开销越来越大。
+	建议将DOM移除掉，类似于图片懒加载的模式，只有出现在视图上的DOM才是重要的DOM。
+	可以用 vue-virtual-scroller 插件
+
+6. 图片的优化：
+	小图标用svg icon
+	小形图片，用base64, webp
+	通过CDN加速大图
+	懒加载
+
+7. 路由按需加载
+	有二种方式： require, import。
+	路由懒加载后， Vue服务在第一次加载时的压力就能够相应的小一些。不会出现越长时间白屏
+
+	// require法
+	component: resolve=>(require(['@/components/HelloWorld'],resolve))
+	
+	// import
+	component: () => import('@/components/HelloWorld')
+
+8. UI框架使用方式
+	按官方提供的， 按需要加载组件，而非把所有组件加载 进来
+
+
+9. 首屏首次加载
+	可以在public下的 index.html， 放个公司logo的  loading
+
+10. webpack的加载
+	a. 最小化JS文件: config.optimization.minimize(true);
+	b. 图片资源压缩: image-webpack-loader 可以对打包的图片，进行压缩
+	c. 打包公共代码: webpack.optimize.CommonsChunkPlugin
+	d. 删除沉淀的代码，即不被用到的代码: Tree-Shaking
+	e. 依赖库CDN加速： 将Vue Axios Echarts等分离出来， 在正式环境下，通过CDN
+						configureWebpack: {
+  							externals: {
+    							'echarts': 'echarts' // 配置使用CDN
+  							}
+						}
