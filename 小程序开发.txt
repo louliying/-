@@ -1,0 +1,69 @@
+1. 小程序双线程：
+	视图渲染与业务逻辑分别在运行在不同的线程中，
+	视图view： 在webview中渲染， 一个页面对应一个webview
+	业务逻辑Appservice： 运行在同一个JSCore线程中，
+						IOS是在javascriptCore,
+						Android是在X5 JSCore
+						开发者工具是webview中
+
+	二个线程的好处：
+		1. 解决长时间脚本阻塞：二个线程互斥，长时间运行业务逻辑脚本，容易导致页面失去响应或白屏。
+	带来问题：
+		1. 延迟，线程间要通信
+		2. 业务逻辑在JSCore中，所以无法文中DOM, BOM的API。
+
+2. 页面渲染：
+	页面渲染机制有三种：
+	纯web渲染
+	纯native原生渲染
+	Hybrid渲染，即web和native渲染结合
+
+	小程序是Hybrid渲染，官方描述：
+		界面主要由成熟的 Web 技术渲染，辅之以大量的接口提供丰富的客户端原生能力。同时，每个小程序页面都是用不同的WebView去渲染，这样可以提供更好的交互体验，更贴近原生体验，也避免了单个WebView的任务过于繁重。
+
+
+		当使用到小程序推供的map, video, canvas, textarea等原生组件时， 会使用原生native渲染。
+		开发者工具中，这些原生组件，都是用html标签来模拟的。
+
+
+
+	虽然用了web渲染，但小程序最终不是转成html标签，而是用了自定义的标签，view转成了wx-view, map转成了wx-map等。
+	wx-view, wx-map这些自定义组件，由Exparser框架管理，它内置在小程序基础库中。
+	为什么要用自定义标签：
+		a.管控与安全：web技术可以通过脚本获取修改页面敏感内容或随意跳转其它页面
+		b. 能力有限，会限制小程序的表现形式
+		c. 标签众多，增加理解成本 
+
+3. 不能访问dom:
+	小程序提供了一个JS沙箱环境，来运行JS代码，JS代码不能访问浏览器相关的接口。
+	沙箱的实现：
+		将业务代码（即你写在.js文件中的代码）， 封装到一个局部环境中，局部环境内，修改dom和bom的api指向。
+		如：
+		define("pages/index/index.js", function(require, module, exports, window, document, frames, self, location, navigator, localStorage, history, Cache, screen, alert, confirm, promp, fetch, XMLHttpReques, WebSocket, webkit, WeixinJSCore, Reporter, print, URL, DOMParser, upload, preview, build, showDecryptedInfo, syncMessage checkProxy, showSystemInfo, openVendor, openToolsLog, showRequestInfo, help, showDebugInfoTable, closeDebug, showDebugInfo, __global, WeixinJSBridge){
+			'use strict';
+			// 你的业务代码 
+			Page({
+				.....
+			})
+		})
+
+		访问每个模块的path时，后台服务会调用wrapSourceCodeInDefine方法，将请求的JS文件，包裹到define域中。
+
+4. 怎么实现data更新， 视图更新：
+	引入的VDOM， 虚拟DOM
+	1. WXML  经Compiler后， 再加上data后， 成了JS对象模拟DOM树
+	2. 比较二颗虚拟DOM树的差异后，把差异更新到真正DOM树上。
+
+	但业务逻辑层数据变化后，怎么同步到视图层的？
+	这就涉及到双线程通信了。
+
+
+5. 小程序基础库有什么作用？
+	基础库用JS写的
+	基础库内置在微信宿主中，打开小程序时，会自动将基础注入到小程序的视图层和业务逻辑层中。
+	小程序开发者工具，是由底层HTTP服务，通过script脚本注入。
+	
+
+
+
+https://www.cnblogs.com/wonyun/p/11168698.html#%E5%A6%82%E4%BD%95%E6%9F%A5%E7%9C%8B%E5%B0%8F%E7%A8%8B%E5%BA%8F%E5%BC%80%E5%8F%91%E8%80%85%E5%B7%A5%E5%85%B7%E6%BA%90%E7%A0%81

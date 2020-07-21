@@ -1356,4 +1356,91 @@
 
 		由于对象总是继承其他对象的，所以可以在任意一个对象中，使用super关键字。
 
+18. module
+	18-1: commomJS, AMD, CMD
+		commomJS: 用于服务器
+			// CommonJS模块
+			let { stat, exists, readfile } = require('fs');
+			====>
+			// 等同于
+			let _fs = require('fs');
+			let stat = _fs.stat;
+			let exists = _fs.exists;
+			let readfile = _fs.readfile;
+
+			_fs是一个对象，把所有方法都取出来了。
+
+			这种加载称为“运行时加载”，因为只有运行时才能得到这个对象，导致完全没办法在编译时做“静态优化”。
+
+		AMD：用于浏览器
+
+		commomJS, CMD运行时， 才确定模块的依赖关系，输入和输出。
+
+		ES6模块： import export
+				通过export命令显式指定输出的代码，再通过import命令输入。
+				import { stat, exists, readFile } from 'fs';
+
+				上面代码，只加载stat, exists readFile三个方法，其它方法不加载。称为“编译时加载”，“静态加载”
+	18-2: ES6下，默认为严格模式
+		严格模式下，限制如下：
+			变量必须声明后再使用
+			函数的参数不能有同名属性，否则报错
+			不能使用with语句
+			不能对只读属性赋值，否则报错
+			不能使用前缀 0 表示八进制数，否则报错
+			不能删除不可删除的属性，否则报错
+			不能删除变量delete prop，会报错，只能删除属性delete global[prop]
+			eval不会在它的外层作用域引入变量
+			eval和arguments不能被重新赋值
+			arguments不会自动反映函数参数的变化
+			不能使用arguments.callee
+			不能使用arguments.caller
+			禁止this指向全局对象
+			不能使用fn.caller和fn.arguments获取函数调用的堆栈
+			增加了保留字（比如protected、static和interface）
+
+			顶层的this指向undefined
+	18-3: export import
+		export: 规定模块对外的接口
+		import: 输入其它模块的功能
+
+		一个模块就是一个独立的文件，文件内部的变量，外界无法访问。
+		如果要让文件内的变量被访问， 用export输出该变量。
+		一个模块，可以export多个变量：
+			export let name.....
+			export let age.....
+
+			===>
+			let name...
+			let age...
+			export {name, age};
+			// import时名字为name
+
+			也可以用as来把输出的变量名，改一改。 
+			export {
+				name as nameNew,
+				age as ageNew,
+				age as ageNew2
+			}
+			// import时，名字就改为nameNew了
+
+
+			export命令规定的是对外的接口，必须与模块内部的变量建立一一对应关系。
+			export 1; // 报错
+
+			var m = 1;
+			export m; //报错
+
+			function fn() {...}
+			export fn; //报错
+
+
+			//正确1
+			export var m = 1;
+			// 正确2
+			var m = 1; 			var fn() =  {}
+			export {m}			export {fn}
+			// 正确3
+			var m = 1;
+			export {m as mNew};
 
