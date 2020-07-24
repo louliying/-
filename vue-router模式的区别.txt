@@ -1,0 +1,76 @@
+1. 有history 和 hash
+	const router = new VueRouter({
+	    // mode: 'history',
+	    mode: 'hash',
+	    base: process.env.BASE_URL,
+	    routes
+	});
+
+	hash模式url里面永远带着#号， 默认用这种
+	history模式，是规范的URL， 适合推广
+
+	有些APP里，打开内嵌h5页面，URL是不允许有#的。
+	使用history模式还有一个问题就是，在访问二级页面的时候，做刷新操作，会出现404错误，那么就需要和后端人配合让他配置一下apache或是nginx的url重定向，重定向到你的首页路由上就ok啦。
+
+
+2. hash:
+	路由的哈希模式其实是利用了window可以监听onhashchange事件
+	url中的哈希值（#后面的值）如果有变化，前端是可以做到监听并做一些响应。即使前端并没有发起http请求他也能够找到对应页面的代码块进行按需加载
+
+	window.onhashchange = function(event){
+    	console.log(event);
+    	/*HashChangeEvent {
+    		....
+    		newURL: "https://www.baidu.com/#1",
+    		oldURL: "https://www.baidu.com/"
+    	}
+    	*/
+  	}
+  	你在URL里，随便改下URL，就会触发onhaschange的事件
+
+
+3. history:
+	H5新推出的两个神器：pushState与replaceState
+	它们的作用是将URL替换成规范URL，且不刷新页面。 HTTP并没有去请求服务器该路径下的资源。
+
+	pushState()不会触发页面刷新，只会导致history对象发生变化， 地址栏会有反应。
+
+	但你一刷新，就去服务器请求该路径了， 就会报404了。
+	这就需要服务器端，将不存在的路径请求，重定向到入口文件（index.html），但是这样， 服务器就不会再返回404了。
+	为了避免这种情况，你应该在 Vue 应用里面覆盖所有的路由情况，然后在给出一个 404 页面。
+	即如下代码：
+	const router = new VueRouter({
+  		mode: 'history',
+  		routes: [
+    		{ path: '*', component: NotFoundComponent }
+  		]
+	})
+
+
+	window.history, 这个对象里，有访问过堆栈的长度
+	History: {
+		length: ,
+		__proto__: {
+			back: function () {},
+			forward: function (){},
+			go: function () {},
+			pushState: fn....,
+			replaceState: fun...
+		}
+	}
+	所以， 可以调用 ：
+	history.go(-3);//后退3次
+  	history.go(2);//前进2次
+  	history.go(0);//刷新当前页面
+  	history.back(); //后退
+  	history.forward(); //前进
+
+
+  	a. history.pushState(data, title [, url])：往历史记录堆栈顶部添加一条记录； 
+  		data会在onpopstate事件触发时作为参数传递过去；
+  		title为页面标题，当前所有浏览器都会 忽略此参数；
+  		url为页面地址，可选，缺省为当前页地址；
+  	b. history.replaceState(data, title [, url]) ：更改当前的历史记录，参数同上； 
+  	c. history.state：用于存储以上方法的data数据，不同浏览器的读写权限不一样；
+  	d. window.onpopstate：响应pushState或replaceState的调用；
+

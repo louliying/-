@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>vue router hash history mode</title>
+	<script>
+  	window.onhashchange = function(event){
+	    let hash = location.hash.slice(1);
+    	document.body.style.backgroundColor = hash;
+  	}
+
+  	window.onpopstate = function(event){
+	    console.log(event);
+  	}
+</script>
+</head>
+<body>
+	
+
+</body>
+</html>

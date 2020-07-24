@@ -1,0 +1,126 @@
+1. 基础概念：
+	将不活动的组件实例保存到内存中，而不是直接销毁。 以组件的key为缓存对象的key。
+	它是一个抽象的组件，不会被渲染到真实的DOM中，也不会出现在父组件链中。
+	提供include, exclude两个属性， 让组件实例，有条件的进行缓存。
+		二者都可以用逗号分隔字符串，正则表达式或一个数组来表达。
+		include： 指缓存符合的组件
+		exclude: 指不缓存指定的组件 
+	提供二个生命钩子， activated, deactivated。
+		因为它不销毁，所以不会重新创建，就不会再调用组件的created等生命周期，需要activated, deactivated 二个生命钩子来得知组件的活动状态。
+
+2. keep-alive的created(), destroyed() 钩子
+	在created时：
+		生成全局cache对象， 作为缓存的容器，保存vnode节点。
+		created () {
+			this.cache = Obeject.create(null);
+		}
+
+	在destoryed ()时：
+		组件被销毁时，清除cache缓存中的所有组件实例。
+		destroyed () {
+			for (const key in this.cache) {
+				pruneCacheEntry(this.cache[key]);
+			}
+		}
+
+3. render()
+	步骤：
+		1. 取以slot里的第一个组件
+		2. 判断这个组件的name, 在exclude, 不在include里， 就直接返回这个vnode, 不走keep-alive机制
+		3. 取这个组件的key， 如果已经在cache里，就读缓存， 不然推入cache里
+	render () {
+		// 获取slot插槽中的第一个组件
+		const vnode: VNode = getFirstComponentChild(
+		this.$slots.default);
+
+		const componentOptions: ?VNodeComponentOptions = vnode && vnode.componentOptions
+
+		if (componentOptions) {
+			// 获取第一个组件的名字，优先取组件的name字段，没有取组件的tag字段
+			const name: ? string = getComponentName(componentOptions);
+
+			// 开始判断name 不在include， 在exclude里， 说明 是不需要缓存的
+			// 直接返回vnode，而不是推入cache容器里
+			if (  name && ( (this.include && !matches(this.include, name)) || (this.exculde && matches(this.exclude, name))  )) {
+				return vnode;
+			}
+
+			// 取每一个组件的key, 优先取组件自带的key, 没有的取构造器的cid + 组件的tag
+			const key: ?string = (vnode.key == null) ? (componentOptions.Ctor.cid + (componentOptions.tag ? `::${componentOptions.tag}` : '')) : vnode.key;
+
+			// 已经缓存过了， 直接取出缓存中的组件实例 
+			// 没有缓存过，就缓存进去。
+			if (this.cache[key]) {
+				vnode.componentInstance = this.cache[key].componentInstance;
+			} else {
+				this.cache[key] = vnode;
+			}
+			// keepAlive的标记位
+			vnode.data.keepAlive = true;
+		}
+		return vnode;
+	}
+
+	function matches (pattern: string | RegExp, name: string) : boolean {
+		// 字符串时
+		if (typeof pattern === 'string') {
+			return patern.split(',').indexOf(name) > -1;
+		} else if (isRegExp(pattern)) {
+			return pattern.test(name);
+		}
+
+		return false;
+	}
+
+4. watch:
+	监听include, exclude二个属性的改变， 如有改变则修改cache缓存中的数据
+
+	watch: {
+		include (val: string | RegExp) {
+			// this._vnode不符合match， 且不在cache时， 把this._vnode销毁，并从cache里删除
+			pruneCache(this.cache, this._vnode, name => matches(val, name));
+		},
+		exclude (val: string | RegExp) {
+			// this._vnode符合match， 且不在cache时， 把this._vnode销毁，并从cache里删除
+			pruneCahce(this.cache, this._vnode, name => !matches(val, name));
+		}
+	}
+
+
+	function pruneCache (cache: VNode, current: VNode, filter: function) {
+		for (const key in cache) {
+			const cachedNode: ?VNode = cache[key];
+			if (cachedNode) {
+				// 缓存中VNode的name
+				const name: ?string = getComponentName(cachedNode.componentOptions);
+				// name不符合filter条件
+				if (name && !filter(name)) {
+					// 取出来的VNode不是当前渲染的VNode
+					if (cacheNode != current) {
+						// 销毁 从缓存中取出的VNode， 并从cache中移除
+						pruneCacheEntry(cachedNode);
+					}
+					cache[key] = null;
+				}
+			}
+		}
+	}
+
+	// 销毁vnode 对应的组件实例
+	function pruneCacheEntry (vnode: ?VNode) {
+		if (vnode) {
+			vnode.componentInstance.$destroy();
+		}
+	}
+
+5. 整体理解：
+	keep-alive内置组件被created()创建时， 生成全局的this.catch对象 
+	在render()渲染时，取出slot里，第一个VNode组件实例对象，
+			a. 这个组件对象，不在include, 或是在exclude里，说明不需要缓存，直接 返回VNode	
+			b. 不然就是需要被缓存的组件实例对象
+					根据VNode的key， 来判断， 是否已经在this.cache里了，
+						在，则直接从cache里取出返回
+						不在，把VNode写入cahche里，缓存起来
+	对include, exclude进行watch:
+		对于include： 当前VNode, 不符合指定match，且不在cache列表里， 则把这个VNode销毁， 并从cache置为null
+		对于exclude: 当前VNode, 符合指定的match， 且不在cahche列表里， 则把这个VNode销毁， 从cache里移出

@@ -1436,7 +1436,7 @@
 
 
 			//正确1
-			export var m = 1;
+			export var m = 1;			export function fn() {}
 			// 正确2
 			var m = 1; 			var fn() =  {}
 			export {m}			export {fn}

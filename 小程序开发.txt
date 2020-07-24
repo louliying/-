@@ -63,9 +63,47 @@
 	基础库内置在微信宿主中，打开小程序时，会自动将基础注入到小程序的视图层和业务逻辑层中。
 	小程序开发者工具，是由底层HTTP服务，通过script脚本注入。
 
+	for (let b = 0, c = j.length; b < c; b++) {
+		const c = j[b],
+			d = a.extname(c);
 
+		'.js' === d ? h.push(`<script src="./__dev__/${c}" charset="UTF-8"></script>`) : '.css' === d && h.push(`<link rel="stylesheet" type="text/css" href='./${c}' />` )
+	}
+
+
+	基础类库包括二部分功能：		
+		a. 业务逻辑层： WAService.js
+			a1. WeixinJSBridge: 消息通信的统一封装
+							主要用于微信与native,开发环境与开发者工具后台服务通信
+			a2.wx: wx对象下面的各个API封装
+			a3. appServiceEngine: 定义了全局的方法，如define, require, App, Page, Component, getApp, getCurrentPages等
+			a4. virtualDOM: VirtualDOM, Diff, Render UI实现 
+			a5. expraser: expraser框架组件的定义，说明 逻辑层也有一定的组件树组织能力
+			a6. Reporter: 小程序日志组件
+
+		b. 视图层： WAWebview.js
+			b1. 消息通信封装为WeixinJSBridge
+			b2. 日志组件Reporter封装
+			b3. wx对象下的api，跟WAService里的不同是，其大部分是处理UI显示相关的方法
+			b4. 小程序Expraser组件框架的实现和内置组件的注册
+			b5. VirtualDOM, Diff, Render UI实现 
+			b6. 定义页面相关事件的触发
+
+6. 视图线程与serve线程间的通信：(WeixinJSBridge)
+	在真机上， 二个线程，是通过基础类中的WeixinJSBridge，通过微信客户端，这个native作为中介来通信。
+	在开发者工具上，没有native这个媒介，是通过websocket来通信的。
+
+	为了保持与真实环境的一致，微信开发者工具没有新增或者删除WeixinJSBridge的方法，只是重写WeixinJSBridge方法的具体实现。
+	其中WeixinJSBridge的注入代码的源文件地址为Contents/Resources/app.nw/js/extensions/pageframe/index.js。
+	WeixinJSBridge对象，其包括on、invoke、publish和subscribe四个方法
+
+	1. on: 用来收集小程序开发者工具触发的事件回调
+	2. invoke：以api方式调用开发工具提供的基础能力，并提供对应api执行后的回调
+	3. publish：用来向Appservice业务层发送消息，也就是说要调用Appservice层的事件方法
+	4. subscribe: 用来收集Appservice业务逻辑层触发的事件回调
 
 
 https://www.cnblogs.com/wonyun/p/11168698.html#%E5%A6%82%E4%BD%95%E6%9F%A5%E7%9C%8B%E5%B0%8F%E7%A8%8B%E5%BA%8F%E5%BC%80%E5%8F%91%E8%80%85%E5%B7%A5%E5%85%B7%E6%BA%90%E7%A0%81
+https://www.cnblogs.com/wonyun/p/10997800.html
 
 
