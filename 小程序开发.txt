@@ -89,7 +89,59 @@
 			b5. VirtualDOM, Diff, Render UI实现 
 			b6. 定义页面相关事件的触发
 
-6. 视图线程与serve线程间的通信：(WeixinJSBridge)
+
+6. wxml转换： 使用wcc
+	小程序开发者工具底层会将小程序项目中所有wxml转为js内容，可以理解为为每个页面wxml进行了注册。
+	通过调用小程序内置的可执行程序执行wcc .../index.wxml，将指定的内容转成JS脚本内容。
+
+	转化的js脚本提供最核心的方法是$gwx方法
+	$gwx = function (path, global) {
+		...
+		return function (env, dd, global) {
+			...
+		}
+	}
+	以上函数， 主要功能: 根据传入的path， 找到相应的页面，返回一个函数。向该函数传入页面渲染时的数据(即Page的data对象)， 得到该wxml对应的JS对象dom树。
+
+	每个小程序页面， 在准备初始化渲染时，都会先调用$gwx方法
+
+	
+
+
+	小程序生个视图层页面内容，都是通过 pageframe.html模板来生成的。
+	小程序对视图层打开的优化：
+	a.  首页启动时，即第一次通过pageframe.html模板生成内容后， 后台服务会缓存pageframe.html模板首次生成的html内容。
+	b. 非首次新打开页面， 页面请求的pageframe.html内容直接走后台缓存。
+	c. 非首次新打开页面时， pageframe.html页面引入外链JS资源， 走本地缓存。
+
+	这样在后续新打开页面时， 都会走缓存的pageframe.html内容，避免重复生成，从而快速打开一个新页面。
+
+
+7. wxss转换： 使用wcsc
+	小程序底层使用wcsc将CSS转换成JS内容。
+	使用： wcsc -db -pc, 其生成的JS内容，是用eval函数中的字符串。
+		还有其它的命令：
+			-lc: need to lint the css
+			-sd: 'someclass { font-size: 18px}'
+			-s: read from stdin
+			-o: output destination (default stdout)
+			-st: print tree
+			-db: add debug attr
+			-js: js format output
+			-cp: add class prefix
+			-pc: page wxss files count
+
+	生成JS时，主要还做了：
+		1. 添加尺寸单位rpx转换， 可根据屏幕宽度自适应
+		2. 提供setCssToHead 方法将转换后的CSS内容添加到header
+
+
+
+后面还得补， 没看回
+
+
+
+8. 视图线程与serve线程间的通信：(WeixinJSBridge)
 	在真机上， 二个线程，是通过基础类中的WeixinJSBridge，通过微信客户端，这个native作为中介来通信。
 	在开发者工具上，没有native这个媒介，是通过websocket来通信的。
 
@@ -102,6 +154,12 @@
 	3. publish：用来向Appservice业务层发送消息，也就是说要调用Appservice层的事件方法
 	4. subscribe: 用来收集Appservice业务逻辑层触发的事件回调
 
+
+
+
+https://www.cnblogs.com/wonyun/p/11168698.html
+https://www.cnblogs.com/wonyun/p/11176762.html
+https://www.cnblogs.com/wonyun/p/10997800.html
 
 https://www.cnblogs.com/wonyun/p/11168698.html#%E5%A6%82%E4%BD%95%E6%9F%A5%E7%9C%8B%E5%B0%8F%E7%A8%8B%E5%BA%8F%E5%BC%80%E5%8F%91%E8%80%85%E5%B7%A5%E5%85%B7%E6%BA%90%E7%A0%81
 https://www.cnblogs.com/wonyun/p/10997800.html
