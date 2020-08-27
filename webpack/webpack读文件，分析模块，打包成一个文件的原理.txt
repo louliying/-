@@ -1,0 +1,183 @@
+一、 核心打包原理
+	1. 读取入口文件:一般为main.js或index.js
+	2. 分析入口文件: 读取依赖的模块， 生成AST语法树
+			分析依赖模块：
+				转成AST: 依赖@babel/parse包
+	3. 根据AST语法树，递归所有模块，生成浏览器能运行的代码
+			对模块内容进行处理：
+				遍历AST，收集依赖：@babel/traverse包
+				ES6转ES5： @babel/core, @babel/preset-env
+
+	安装module:
+		npm install @babel/parser 将二进制文件，转成可运行的JS文件， AST
+		npm install @babel/traverse 遍历AST
+		npm install @babel/core @babel/preset-env	ES6转ES5
+
+
+
+二、 实例：	
+	如下目录结构：
+		src
+			-- add.js
+			-- index.js 		//主入口
+			-- minus.js
+		index.html
+		build.js 				// 打包文件
+
+
+
+	add.js:
+		export default (a, b) => {
+			return a + b;
+		}
+	minus.js:
+		export const minus = (a, b) => {
+			return a - b;
+		}
+	index.js 			// webpack打包主入口
+		import add from './add';
+		import {minus} from './minus';
+		const sum = add(1, 2);
+		const division = minus(2, 1);
+		console.log(sum);
+		console.log(division);
+	index.html
+		<!DOCTYPE html>
+		<html lang="en">
+			<head>
+				<meta charset="UTF-8">
+				<title>webpack</title>
+			</head>
+			<body>
+				<script src="./src/index.js"></script>
+			</body>
+		</html>
+	build.js 			// webpack打包文件
+		const fs = require('fs');
+		const path = require('path');
+		const parser = require("@babel/parser");
+		const traverse = require('@babel/traverse').default;
+		const babel = require('@babel/core')
+
+		const fs = require('fs');
+		const getModuleInfo = (file) => {
+			// node fs 异步读取文件
+			const body = fs.readFilesSync(file, 'utf-8');
+
+			// 分析主入口文件里的模块
+			// 这里调用的是@babel/parser的parse API
+			// parse API的作用： parse the provided code as an entire ECMAScript program
+			const ast = parser.parse(body, {
+				// 表示我们要解析的是ES6的module模块
+				sourceType: 'module'
+			});
+			// ast中，文件路径存在于 ast.program.body.node.value 中
+			console.log(ast);
+
+			// 遍历AST,将用到的所有依赖收集起来，
+			// 即将import语句引入的文件路径收集起来，放到deps中。
+			const deps = {};
+			traverse(ast, {
+				ImportDeclaration({node}) {
+					const dirname = path.dirname(file);
+					// node.source.value 其实就是 import './add'中的 './add'
+					const abspath = './' + path.join(dirname, node.source.value);
+					// deps 的值就是 
+					// {'./add': './src\\add', './minus': './src\\minus'}
+					deps[node.source.value] = abspath;
+				}
+			});
+
+
+			//ES6转ES5
+			// transformFromAst API, 将传入的AST转化成在第三个参数里配置的模块类型
+			const {code} = bable.transformFromAst(ast, null, {
+				presets:['@babel/preset-env']
+			});
+
+			// moduleInfo中存了：
+			// file： 该模块的路径
+			// deps: 该模块的依赖
+			// code：该模块转化成es5的代码
+			const moduleInfo = {file, deps, code};
+			return moduleInfo;
+			
+		}
+		// 写个递归方法， 读取所有依赖的模块
+		// file: 主入口文件 './src/index'
+		const parseModules = (file) => {
+			const entry = getModuleInfo(file);
+			// 将主入口文件的模块信息放入temp中
+			// [{'./src/index': './src\\index'}]
+			const temp = [entry];
+			const depsGraph = {};
+			for (let i = 0; i < temp.length; i++) {
+				// deps中，是index.js中所有依赖的模块path, 
+				// 即 {'./add': './src\\add', './minus': './src\\minus'}
+				const deps = temp[i].deps;
+				if (deps) {
+					for (const key in deps) {
+						if (deps.hasOwnProperty(key)) {
+							temp.push(getModuleInfo(deps[key]));
+						}
+					}
+				}
+			}
+			// 让返回的obj格式 为：
+			/* {
+					'./src/index.js': {
+						deps: {'./add.js': './src\\add.js', './minus.js': './src\\minus.js'},
+						code:....
+					},
+					'./src\\add.js': {
+						deps:{},
+						code:...
+					},
+					'./src\\minus.js': {
+						deps:{},
+						code: ...
+					}
+				}
+			*/
+			temp.forEach(moduleInfo => {
+				depsGraph[moduleInfo.file] = {
+					deps: moduleInfo.deps,
+					code: moduleInfo.code
+				}
+			});
+			return depsGraph;
+		}
+		// 读取主入口文件index.js
+		// parseModules('./src/index.js');
+
+		// 要让浏览器能识别require和exports，自己定义一个require, exports方法呗
+		// 把几个code合并至一个js中
+		const bundle = (file) => {
+			// depsGraph中存了， {'../index.js': {deps:{...}, code:...}, ....}的字符串
+			const depsGraph = JSON.stringify(parseModules(file));
+			return `(function(graph) {
+					function require(file) {
+						// 将'./add.js'转成绝对路径
+						function absRequire(relPath) {
+							return require(graph[file].deps[relPath]);
+						}
+						var exports = {};
+
+						(function (require, exports, code){
+							eval(code);
+						})(absRequire, exports, graph[file].code);
+						return exports;
+					}
+					require('${file}')
+				})(${depsGraph})`
+			// return里的语句意义
+			// 把保存下来的depsGraph，传入一个立即执行函数
+			// 将文件路径传入require函数执行
+			// 执行require函数时， 又立即执行一个立即执行函数，把code值传进去
+			// 执行eval(code),
+		}
+
+		const content = bunlde('./src/index.js');
+		// 将汇到一起的js 字符串，创建到dist的bundle.js文件中
+		fs.mkdirSync('./dist');
+		fs.writeFileSync('./dist/bundle.js', content);

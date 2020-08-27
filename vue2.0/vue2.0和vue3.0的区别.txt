@@ -1,0 +1,21 @@
+1. 目录结构：
+	Vue3.0 移除了配置文件+， config和build
+		   移除了static 静态文件+， 增加了public文件+
+		   index.html移到了public中
+
+2. 配置项：
+	Vue3.0 config已移除
+	多了.env.production , .env.development文件， 来配置不同运行环境
+	跨域等配置域名时， 从config/index.js改为在vue.config.js中配置，方法不变
+
+3. 渲染：
+	Vue2.0使用VDom实现渲染
+	Vue3.0 不论是原生html标签，还是Vue组件， 都会通过h 函数来判断。如果是原生html标签， 运行时直接通过 VDom来渲染， 如果是组件，直接生成组件代码。
+
+4. 数据监听
+	Vue2.0 使用Object.defineproperties()拦截setter, getter
+	Vue3.0 基于Proxy进行监听。 它的监听，是lazy by default， 用到了才会监听。
+
+5. 按需引入 
+	Vue2.0中 new实例对象，所有的东西都在这个vue实例对象上。用到没用到的， 都会跑一遍。
+	Vue3.0，用ES6 的 module import按需引入

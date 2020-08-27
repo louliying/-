@@ -1,0 +1,8 @@
+1. 安装 Vue3.0
+	npm install -g @vue/cli
+	如果已经全局安装了vue2.0,  cli2可以手动删除，再安装3
+
+2. 创建一个项目：
+	vue create vue3Project
+
+	cli2的创建： 
