@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>h5 video demo</title>
+	<style>
+		body{
+
+		}
+		section{
+			position: relative;	
+					
+		}
+		video {
+			position: absolute;
+			width: 100%;
+		}
+		.content {
+			width: 100%;
+			position: absolute;
+			z-index: 1;
+			left: 0;
+			top: 120px;
+			text-align: center;
+			color: #fff;
+		}
+	</style>
+</head>
+<body>
+	<section>
+		<!-- 为微信端设置 class playsinline x5-video-player-type -->
+		<video 
+			loop 
+			autoplay="autoplay" 
+			muted 
+			preload="true" 			
+			class="player"
+			playsinline="true"
+        	webkit-playsinline="true"	
+        	mtt-playsinline="true"
+        	x5-video-player-type="h5-page">
+			<source src="demo.mp4" type="video/mp4" />
+		</video>
+		<div class="content">
+			<p>video做为背景层，在最底层</p>
+			<p>video 且自动播放</p>
+		</div>
+	</section>
+	<script>
+		// 为微信端自动播放
+	    window.onload = function () {
+	        const player = document.querySelector('.player');
+	        // 自动播放
+	        if (window.WeixinJSBridgeReady) {
+	        	document.addEventListener('WeixinJSBridgeReady', player.play());
+	        }
+	        
+	    }
+	</script>
+</body>
+</html>

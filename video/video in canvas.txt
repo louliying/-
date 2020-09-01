@@ -1,0 +1,39 @@
+一、视频的选择
+	1. gif: 大， 像素因压缩可能失真
+			同等视觉效果的 gif 图片体积远大于视频文件
+			gif 受限于 256色无法保证视觉效果的细节
+	2. h5 video
+		<video loop autoplay="autolay" preload="auto" muted></video>
+		循环播放: loop
+		自动播放： autoplay="autoplay"， 
+				  视频的自动播放是有限制的，只有无音轨的视频或是静音video元素才能自动播放 
+				  所以加上 muted 属性
+
+		播放器控件： controls 不设置就不会显示
+
+		在微信端， 会有样式兼容问题：
+			需加上： 
+				内联播放标识： playsinline="true"
+				微信播放器类型： 	x5-video-player-type="h5-page"
+
+			自动播放处理：监听WeixinJSBridgeReady， 来让其自动播放
+
+		demos/h5video.html在微信打开， 什么也不显示。。。
+		在手机 chrome里打开是好的
+
+
+		安卓机是个坑：
+			几乎每个国放安卓机， 都有自带浏览器， 都对video元素进行了定制化处理， 如：
+			1. 静音视频无法自动播放
+			2. 无法隐藏控制条，未设置controls也没用
+			3. 视频默认为弹窗播放
+			4. 甚至会有广告
+
+	3. canvas
+		视频截取一张张图片，通过canvas绘制出来。
+		因为：
+			要把video绘制到canvas， 也是得无播放视频， 这又会和浏览器相关了， 会有兼容性了。
+
+
+		1. 视频转图片的库：
+			WasmVideoPlayer、 WXInlinePlayer,Broadway, jsmpeg
