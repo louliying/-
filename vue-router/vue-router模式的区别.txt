@@ -1,4 +1,21 @@
-1. 有history 和 hash
+1. 原理:
+	单页面应用：第一次进入，会请求一个html文件。点击切换后， 路径变了，但没有新的html文件请求，但页面内容变化 了。
+
+	原理：JS感知URL的变化后，JS清除相应内容，将新的内容挂载到当前页面上。
+
+	每次URL变化，没有新的html请求，只是更新了当前的html显示内容。
+
+
+2. 有history 和 hash, abstract
+
+	a. hash: 使用URL hash值来作路由，默认模式
+	b. history: 依赖H5 History API 和服务器配置
+	c. abstract: 支持JS运行环境，如Node.js服务器端
+
+	1. vue router 默认会在浏览器端使用hash模式，在移动原生环境中使用abstract模式。	
+    2. 如果设置的是'history'但是如果浏览器不支持的话，'history'模式会退回到'hash'模式.通过 supportsPushState 判断浏览器是否支持'history'模式, 这时候router内部 需要做一些降级处理，修改传过来的location等
+	
+
 	const router = new VueRouter({
 	    // mode: 'history',
 	    mode: 'hash',
@@ -13,7 +30,15 @@
 	使用history模式还有一个问题就是，在访问二级页面的时候，做刷新操作，会出现404错误，那么就需要和后端人配合让他配置一下apache或是nginx的url重定向，重定向到你的首页路由上就ok啦。
 
 
-2. hash:
+3. hash:
+	hash即浏览器url 中#后面的内容。
+	hash是URL中的锚点，代表网页中的一个位置。
+
+	#是浏览器的动作，对服务器端没用， HTTP请求中，不包含#。
+	如： http://a...com/#/user/id  只会发送http://a...com/
+
+	每一次改变#后面部分，都会在浏览器的访问历史中增加一个条记录，使用“后退”时，可回到上一个位置。
+
 	路由的哈希模式其实是利用了window可以监听onhashchange事件
 	url中的哈希值（#后面的值）如果有变化，前端是可以做到监听并做一些响应。即使前端并没有发起http请求他也能够找到对应页面的代码块进行按需加载
 
@@ -29,15 +54,17 @@
   	你在URL里，随便改下URL，就会触发onhaschange的事件
 
 
-3. history:
+4. history:
 	H5新推出的两个神器：pushState与replaceState
-	它们的作用是将URL替换成规范URL，且不刷新页面。 HTTP并没有去请求服务器该路径下的资源。
+	它们的作用是将URL修改成规范URL，但不刷新页面。 HTTP并没有去请求服务器该路径下的资源。
 
 	pushState()不会触发页面刷新，只会导致history对象发生变化， 地址栏会有反应。
 
 	但你一刷新，就去服务器请求该路径了， 就会报404了。
 	这就需要服务器端，将不存在的路径请求，重定向到入口文件（index.html），但是这样， 服务器就不会再返回404了。
-	为了避免这种情况，你应该在 Vue 应用里面覆盖所有的路由情况，然后在给出一个 404 页面。
+	为了避免这种情况， 服务器端增加一个覆盖所有情况的候选资源：
+		如果URL匹配不到任何静态资源，则应该返回同一个index.html
+	为了避免这种情况，因为服务器端不再返回404，你应该在 Vue 应用里面覆盖所有的路由情况，然后在给出一个 404 页面。
 	即如下代码：
 	const router = new VueRouter({
   		mode: 'history',
@@ -73,4 +100,10 @@
   	b. history.replaceState(data, title [, url]) ：更改当前的历史记录，参数同上； 
   	c. history.state：用于存储以上方法的data数据，不同浏览器的读写权限不一样；
   	d. window.onpopstate：响应pushState或replaceState的调用；
+
+
+5. abstract模式：
+	abstract模式，是一个不依赖于浏览器的浏览历史虚拟管理后端。
+	在weex环境中，只支持使用abstract模式。
+	Vue router自身会对环境做校验， 只要你没明确指明mode配置。 router发现没有浏览器API，会自动强制进入abstract模式。
 
