@@ -1,0 +1,17 @@
+一、 原生组件：
+	Android使用Kotlin 或 Java来编写视图
+	IOS中使用Swift 或 Objective-C 来编写视图
+
+	在RN中，通过JS来调用 这些视图。 在运行时， RN为这些组件创建相应的Android和 iOS 视图。
+
+	因为RN组件就是对原生视图的封装，使用RN编写的就用外观，感觉和性能，也其他任何就用一样， 所以我们称为原生组件。
+
+
+二、 核心组件：
+	主要常用的核心组件：
+	<View>			Android:  <ViewGroup>		iOS: <UIView>			web:  <div>没有滚动条
+	<Text>			Android:  <TextView>		iOS: <UITextView>		web:  <p>
+	<Image>			Android:  <ImageView>		iOS: <UIImageView>		web:  <img>
+	<ScrollView>	Android:  <ScrollView>		iOS: <UIScrollView>		web:  <div>
+	<TextInput>		Android:  <EditText>		iOS: <UITextField>		web:  <input type="text" >
+

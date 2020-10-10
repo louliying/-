@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>二数之和</title>
+</head>
+<body>
+	<p>题目描述：</p>
+	<p>给定一个整数数组 nums 和一个目标值 target，请你在该数组中找出和为目标值的那 两个 整数，并返回他们的数组下标。</p>
+	<p>你可以假设每种输入只会对应一个答案。但是，数组中同一个元素不能使用两遍。</p>
+	<p>示例：</p>
+	<pre>
+		给定 nums = [2, 7, 11, 15], target = 9
+		因为 nums[0] + nums[1] = 2 + 7 = 9
+		所以返回 [0, 1]
+	</pre>
+	<p>方法一：</p>
+	<pre>
+		var twoSum = function (arr, target) {
+			if (arr.length < 2) {
+				return -1;
+			}
+			for (let i = 0, len = arr.length; i < len; i++) {
+				for (let j = i; j < len; j++) {
+					if (arr[i] + arr[j] === target) {
+						return [i, j]
+					}
+				}
+			}
+			return -1;
+		}
+	</pre>
+	<p>方法二：</p>
+	<pre>
+		/**
+		 * @param {number[]} nums
+		 * @param {number} target
+		 * @return {number[]}
+		 */
+		var twoSum = function(nums, target) {
+		    let iLen = nums.length;
+		    if (iLen <2 ) {
+		        return -1;
+		    }
+		    // aTemp里存的是  [2: 0, 10:1, 11: 3, 7: 4.....]
+		    let aTemp = [];
+		    for (let i = 0 ; i < iLen; i++) {
+		        var dif = target - nums[i];
+		        if (aTemp[dif] != undefined) {
+		        	// 到i 是3时， 发现aTemp[2]有的，值 为下标0， 所以aTemp[dif]要在前
+		            return [aTemp[dif], i]
+		        } 
+		        aTemp[nums[i]] = i;
+		        
+		    }
+		    return -1;
+		};
+		let a = twoSum([2, 10, 11, 7, 15], 9);
+		console.log(a)
+	</pre>
+
+	<p>方法三：</p>
+	<pre>
+		var twoSum = function(nums, target) {
+		  let map = new Map();
+		  for (let i = 0; i < nums.length; i++) {
+		    let dif = target-nums[i]
+		    if (map.has(dif)) {
+		      return [map.get(dif), i]
+		    }
+		    map.set(nums[i], i);
+		  }
+		};
+	</pre>
+</body>
+</html>

@@ -1,0 +1,142 @@
+一、 React组件的二种写法：
+	1. 函数式组件：
+		import React from 'react';
+		import {Text} from 'react-native';
+
+		// 函数的返回值就会被渲染为一个 React 元素
+		export default function Cat () {
+			const name = 'Cindy';
+
+			function getFullName (firstName, lastName) {
+				return firstName + ' ' + lastName;
+			}
+			return (
+				<Text>Hello, I am your {getFullName('Cindy', 'lou')} cat.</Text>
+			)
+		}
+
+	2. Class 组件：
+		import React,  {Component} from 'react';
+		import { Text } from 'react-native';
+
+		export default class Cat extends Component {
+			render () {
+				return (
+					<Text>Hello, I am your cat.</Text>
+				);
+			}
+		}
+二、 补充 ES6的 export import
+	1. export多个变量
+		export const name = 'cindy';
+		import {name} from '....';
+
+	2. export 一个默认变量
+		export default 'cindy';
+		import anyName from '...';
+
+	3.  export 一个别名
+		const name = 'cindy';
+		export {name as newName};
+		import { newName } from '...';
+
+	4. export 多值变量 + 默认值
+		export const name = 'cindy';
+		export default 'cindy';
+
+		import * as anyName from '...'
+
+	5. export 列表和别名
+		export {
+			name1,
+			name2 as newName2
+		};
+		import {
+			name1 as newName1,
+			newName2
+		} from '...';
+
+	出处： https://www.samanthaming.com/tidbits/79-module-cheatsheet/
+
+三、 JSX
+	JSX语法，可以在JS中直接输出元素。
+	JSX本质上，也是JS，所以可以在其中直接使用变更。 如：<Text>Hello, I am your {name} cat.</Text>
+	取变量值： {name}
+	调用函数： {getFullName('cindy', 'lou')}
+
+	可以把括号{} 想象成在JSX中打开了一个可以调用JS功能的传送门。
+	JSX语法糖，实质是调用React.createElement方法， 所以在文件头部要引用import React from 'react'
+
+四、 自定义组件
+	React可以通过嵌套组件来创建新组件。
+	如， 把Text, TextInput 嵌入到View中，组成一个新的组件。
+
+	import React from 'react';
+	import {Text, TextInput, View} from 'react-native';
+	export default function Cat () {
+		return (
+			<View>
+				<Text>Hello, I am ....</Text>
+				<TextInput 
+					style = {{
+						height: 40,
+						borderColor: 'gray',
+						borderWidth: 1
+					}}
+					defaultValue = 'name cindy'
+				/>
+			</View>
+		)
+	}
+
+
+	可以在其它组件里，调用Cat组件， 实现更复杂的组件
+
+五、 Props 属性
+	可做为组件的属性传入
+	function Cat(props) {
+		return (
+			<View>Hello, I am {props.name}</View>
+		)
+	}
+
+	export default function Cafe () {
+		return (
+			<View>
+				<Cat name="cindy" />
+				<Cat name="loulou" />
+			</View>
+		)
+	}
+
+六、 state状态
+	1. 函数组件里的state
+		import React,  {useState} from 'react';
+		import {Buttton, Text, View} from 'react-native';
+
+		function Cat (props) {
+			const [isHungry, setIsHungry] = useState(true);
+			return (
+				<View>
+					<Text>
+						I am {props.name}, and I am {isHungry ? 'hungry' : 'full'} !
+					</Text>
+					<Button 
+						onPress={ () => {
+							setIsHungry(false);
+						}}
+						disabled = {!isHungry}
+						title={isHungry ? 'Pour me some milk.' : 'Thank you.'}
+					/>
+				</View>
+			);
+		}
+
+		export default function Cafe () {
+			return (
+				<View>
+					<Cat name="Cindy" />
+					<Cat name="lou" />
+				</View>
+			)
+		}

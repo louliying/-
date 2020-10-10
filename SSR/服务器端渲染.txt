@@ -52,6 +52,8 @@
 	Vue 2.5以下版本， 服务端渲染时异步组件只能用在路由上。
 	2.5+版本， 异步组件可以用在任何地方。
 
+七、 数据预取和状态
+	
 	
 	https://ssr.vuejs.org/zh/guide/structure.html#%E4%BD%BF%E7%94%A8-webpack-%E7%9A%84%E6%BA%90%E7%A0%81%E7%BB%93%E6%9E%84
 

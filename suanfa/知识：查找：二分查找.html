@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>二分查找</title>
+</head>
+<body>
+	<p>查找，指在队列里，找到指定的值。 可以线性查找，即循环一遍队列，找到想要的值。</p>
+	<p>可以二分查找，即取出队列的中间数， 一分为二， 小的在左边， 大的在右边。</p>
+	<p>线性查找，就是一个for，遍历队列，下面的代码是二分查找。</p>
+	<pre>
+		// arr 被查找的队列
+		// val 要指的值
+		// 返回值： 找得到，返回相应元素在队列的下标，
+		//			找不到，返回 -1
+		function binarySort (arr = [], val) {
+			let iLen = arr.length;
+			if (iLen < 1){
+				return -1;
+			}
+			let iLeft = 0;
+			let iRight = iLen - 1;
+			let iMid;
+			while (iLeft < iRight) {
+				iMid = Math.ceil((iLeft + iRight) / 2);
+				if (arr[iMid] === val) {
+					return iMid;
+				}
+				if (arr[iMid] < val) {
+					iRight -= 1;
+				} else {
+					iLeft += 1;
+				}
+			}
+			return -1;
+		}
+		var arr = [4, 5, 6, 1, 9, 10, 3, 12];
+		console.log(binarySort(arr, 9)); 	// 4
+	</pre>
+</body>
+</html>

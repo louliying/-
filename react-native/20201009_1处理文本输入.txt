@@ -1,0 +1,29 @@
+一、基础
+	TextInput允许用户输入的基础组件。
+	有属性：
+		onChangeTex: 接受一个函数， 在文本值修改时，被调用
+		onSubmitEditing: 接受一个函数，在文本被提交后（用户按下软键盘上的提交键）调用
+		onFocus: 接受一个函数
+
+二、 demo
+	import React, { useState } from 'react';
+	import {Text, TextInput, View} from 'react-native';
+
+	const PrizzaTranslator = () => {
+		const {text, setText} = useState('');
+
+		return (
+			<View style="{{padding: 10}}">
+				<TextInput 
+					style={{height: 40}}
+					placeholder="Type here to translate!"
+					onChangeText={text => setText(text)}
+					defaultValue={text}
+				/>
+				<Text style="{{padding: 10, fontSize: 42}}">
+					{text.split(' ').map((word) => word && '🍕').join(' ')}
+				</Text>
+			</View>
+		)
+	}
+	export default PrizzaTranslator;

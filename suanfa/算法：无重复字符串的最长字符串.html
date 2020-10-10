@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>无重复字符串的最长字符串</title>
+</head>
+<body>
+	<p>给定一个字符串，请你找出其中不含有重复字符的 最长子串 的长度。</p>
+	<p>示例：</p>
+	<pre>
+		输入: "abcabcbb"
+		输出: 3 	
+		解释: 因为无重复字符的最长子串是 "abc"，所以其长度为 3。	
+	</pre>
+	<pre>
+		输入: "bbbbb"
+		输出: 1
+		解释: 因为无重复字符的最长子串是 "b"，所以其长度为 1。
+	</pre>
+	<pre>
+		输入: "pwwkew"
+		输出: 3
+		解释: 因为无重复字符的最长子串是 "wke"，所以其长度为 3。
+     	请注意，你的答案必须是 子串 的长度，"pwke" 是一个子序列，不是子串。
+	</pre>
+
+	<pre>
+		var lengthOfLongestSubstring = function(s) {
+	    let oTemp = [];
+	    let iLen = s.length;
+	    if (iLen < 2) {
+	        return iLen;
+	    }
+	    let aCount = 0; 
+	    let arr = [];
+	    for (let i = 0; i < iLen; i++) {
+	        if (oTemp[s[i]]) {
+	            oTemp[s[i]] += 1;
+	            arr.push(aCount);
+	            aCount = 1;
+	            oTemp = [];
+	            oTemp[s[i]] = 1;
+	            
+	            
+	        } else {
+	            oTemp[s[i]] = 1;
+	            aCount++;
+	        }      
+	    }
+	    arr.push(aCount);
+	    
+	    // p:1, w:1, w:2, k:1, e:1, w:3
+	    // a:1, b:1, c:1, a:2, b:2, c:2
+	    // b:1, b:2, b:3
+	    console.log('arr:', arr);
+	    return Math.max.apply(null,arr);
+	};
+	var s = "pwwkew";
+	console.log(lengthOfLongestSubstring(s));
+	</pre>
+</body>
+</html>

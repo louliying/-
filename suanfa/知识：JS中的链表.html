@@ -1,0 +1,218 @@
+一、定义
+	链表是一种线性表， 
+	但不按线性顺序存储数据，而是每一个节点里存着下一个节点的指针。
+	优点：克服数组链表需要预先知道数据大小的缺点，链表可以充分利用计算机内存空间，实现灵活的内存动态管理
+	缺点：失去了数组随机读取的优点， 因增加了结点的指针域，空间开销比较大。
+
+二、 单向链表：
+	最简单的一种链表
+	它包含两个域： 信息域， 指针域。
+					这个链接指向列表中的下一个节点， 最后一个节点指向一个空值。
+
+三、 双向链表：
+	每个节点有两个连接，一个指向前一个节点：如果是第一个节点，则指向空值或空列表
+					  一个指同下一个节点： 如果是最后一个连接， 指向空值或空列表
+四、 循环链表
+	首节点和末节点连接在一起。
+	单向和双向链表中， 都可以实现 。
+
+五、 单向链的实现：
+	class LinkList {
+		constructor () {
+			this.head = null;
+			this.length = 0;
+		}
+
+		// 静态方法，创建节点
+		// 返回{{next: null, data: *}}
+		static createNode (data) {
+			return  {
+				data,
+				next: null
+			}
+		}
+
+		// 添加节点到链表尾部
+		append (data) {
+			const node = LinkList.createNode(data);
+			if (this.length === 0) {
+				this.head = node;
+			} else {
+				let cur = this.head;
+				while (cur.next) {
+					cur = cur.next;
+				}
+				cur.next = node;
+			}
+			this.length += 1;
+		}
+
+		// 根据位置信息删除节点，返回数据
+		removeAt (position) {
+			// 超出链表长度，或小于0
+			if (position > this.length }} position < 0) {
+				return null;
+			}
+			let data;
+			// 如果 是第一个
+			if (positon === 0) {
+				data = this.head;
+				this.head = this.head.next;
+				this.length--;
+				return data;
+			}
+			// 当前指针
+			let cur = this.head.next;
+			let prev = this.head;
+			let idx = 1;
+			while (cur) {
+				if (idx === position) {
+					data = cur;
+					prev.next= cur.next;
+					this.length--;
+					return data;
+				}
+				// cur, prev各往后移一位
+				prev = cur;
+				cur = cur.next;
+				idx++;
+			}
+			// 到了这里，说明 是没找到
+			return null;
+		}
+
+		// 根据数据删除元素，返回索引
+		remove (data) {
+			// 当前指针
+			let cur = this.head;
+			// 上一个指针， 默认从head开始
+			// 这样，如果删除的是第一个元素，prev也不会是一个野指针
+			let pre = this.head;
+			let idx = 0;
+			while (cur) {
+				if (data === cur.data) {
+					prev.next = cur.next;
+					this.length--;
+					return idx;
+				}
+				// pre, cur往后称一位
+				prev = cur;
+				cur =  cur.next;
+				idx++;
+			}
+			// 到了这里，说明 是没找到
+			return null;
+		}
+
+		// 根据指定位置，插入数据，返回长度
+		insert(position, data) {
+			if (position > this.length || position < 0 ) {
+				return -1;
+			}
+			const node = LinkList.createNode(data);
+			// 头部插入
+			if (position === 0) {
+				node.next = this.head;
+				this.head = node;
+				this.length += 1 ;
+				return this.length;
+			} else if (position === this.length) {
+				// 尾部插入
+				let cur = this.head.next;
+				while (cur.next) {
+					cur = cur.next;
+				}
+				cur.next = node;
+				this.length += 1;
+				return this.length;
+			}
+
+			// 非头尾插入
+			let cur = this.head;
+			let prev = this.head;
+			let idx = 1;
+			while (cur) {
+				if (idx === position) {
+					node.next = cur.next;
+					prev.next = node;
+					this.length += 1;
+					return this.length;
+				}
+				// pre , cur都往后移一格
+				prev = cur;
+				cur = cur.next;
+				idx++;
+			}
+		}
+
+		// 根据数据， 返回索引
+		find (data) {
+			let idx = 0;
+			let cur = this.head;
+			while (cur.next) {
+				if (cur.data === data) {
+					return idx;
+				}
+				idx++;
+				cur = cur.next;
+			}
+			return -1;
+		}
+
+		// 把链表元素的每条数据，拼成一个字符串，以","相隔
+		toString () {
+			let resultString = '';
+			const cur = this.head;
+			while (cur) {
+				resultString += cur.data + ', ';
+			}
+			result resultString;
+		}
+	}
+
+六、双向链的实现：
+	class DoubleLinkList {
+		constructor () {
+			this.head = null;
+			this.tail = null;
+			this.length = 0;
+		}
+
+		// 静态方法，创建节点
+		// 返回 {{next: null, prev: null, data:data}}
+		static creatNode (data) {
+			return {
+				data,
+				next: null,
+				prev: null
+			}
+		}
+
+		// 插入到尾部
+		append (data) {
+			const node = DoubleLinkList.createNode(data);
+			if (this.length === 0) {
+				this.head = node;
+				this.tail = 0;
+			} else {
+				// 新插入的节点， 上一个节点是 老的尾链
+				node.prev = this.tail;
+				// 老的尾链， 指向新插入的节点node
+				this.tail.next = node;
+				// 更新尾链，指向新插入的节点
+				this.tail = node;
+			}
+			this.length += 1;
+		}
+
+		forwardingString () {
+			let cur = this.head;
+			let resultStr = '';
+			while (cur) {
+				resultStr += cur.data;
+				cur = cur.next;
+			}
+			return resultStr;
+		}
+	}
+

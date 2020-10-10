@@ -1,0 +1,53 @@
+1. 定义
+	又称： 伫列 queue
+	先进先出 FIFO的线性表。 只允许后端（rear）进行插入， 前端（front）进行删除
+	排队 是一种典型的队列。
+
+2. JS实例队列
+	function Queue () {
+		this.list = [];
+	}
+	
+	// 队尾推入新元素
+	Queue.prototype.enqueue = function(element) {
+		this.list.push(element);
+	}
+	// 队头推出 一个元素
+	Queue.prototype.dequeue = function () {
+		return this.list.shift();
+	}
+	// 返回队头第一个元素
+	Queue.prototype.front = function () {
+		return this.list[0];
+	}
+	Queue.prototype.isEmpty = function () {
+		return this.list.length <= 0;
+	}
+	Queue.prototype.size = function () {
+		return this.list.length;
+	}
+	Queue.prototype.toString = function (){
+		return this.list.join(' ');
+	}
+
+3. 实战应用： 击鼓传花
+	有一些人， 围成一个圈， 循环报数， 成为第N个的人出列，依次继续，直到剩下最后一个人为胜利
+	function arithmeticQueue(names = [], num = 3) {
+		const q = new Queue();
+		// 把name数组推入队列q中
+		name.forEach(v => q.enqueue(v));
+
+		let idx = 0;
+		while(q.size() > 1) {
+			// 出列的人回到后面， 为一圈
+			if (idx === num) {
+				// 删除第N个人
+				q.dequeue();
+				idx = 0;
+			}
+			q.enqueue(q.dequeue());
+			idex++;
+		}
+		// 最后的赢家
+		return q.front();
+	}
