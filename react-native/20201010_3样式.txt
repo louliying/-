@@ -1,0 +1,27 @@
+一、基础：
+	RN中，所有的核心组件都接受名为style的属性。
+	style的样式名， 按JS的语法要求，使用驼峰式命名， 如backgroundColor
+
+	style属性，可以是一个普通的JS对象。
+	如： <Text style={{color: red, fontSize: 16}}>
+
+二、 StyleSheet.creat()
+	借鉴 CSS 中的“层叠”做法（即后声明的属性会覆盖先声明的同名属性）
+
+三、 高度宽度
+	RN中尺寸都是无单位的，表示的是与设备像素密度无关的逻辑像素点。
+
+	1. 固定宽高
+		如：
+			<View style={{width: 50, height: 100, backgroundColor: blue}}></View>
+
+	2. 弹性宽高 flex
+		flex，使组件在可利用的空间中动态地扩张/收缩。
+		flex:1， 来指定某个组件扩张以撑满所有剩下的空间。
+		如果多个子组件使用flex:1，则这些子组件平分父容器中剩余的空间。谁的flex值大，占的空间就大。前提是父容器尺寸不为0。
+		如：
+			<View style={{flex: 1}}>	// 父容器撑满全屏
+      			<View style={{flex: 1}} />	// 子1，占1/6
+      			<View style={{flex: 2}} />	// 子2，占2/6
+      			<View style={{flex: 3}} />	// 子3，占3/6
+    		</View>

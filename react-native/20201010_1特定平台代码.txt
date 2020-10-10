@@ -1,0 +1,72 @@
+一、 基础：
+	RN提供二种方法来区分平台：
+	a.使用Platform模块
+	b.使用特定平台扩展名
+
+	有些内置组件的某些属性，可能只在特定平台有用。
+
+二、 Platform模块
+	由RN提供，一个检测当前运行平台的模块。
+	如果组件只有一小部分代码需要依据平台定制，则可以用这个模块。
+	1. Platform.OS
+		Platform.OS 在IOS 上返回ios， 在Android或模拟器上返回android
+		如：
+			import { Platform, StyleSheet } from 'react-native';
+
+			const styles = StyleSheet.create({
+				height: Platform.OS === 'ios' ? 200 : 100
+			});
+			
+	2. Platform.select({})
+		Platform.select()， 以Platform.OS为key， 从传入的对象中返回对应平台的值
+		如：
+			import  {Platform, styleSheet } from 'react-native';
+			const styles = StyleSheet.create({
+				container: {
+					flext:1,
+					...Platform.select({
+						ios: {
+							backgroundColor: 'red'
+						},
+						android: {
+							backgroundColor: 'blue'
+						}
+					})
+				}
+			});
+			
+		如：
+			const CustomerComponent = Platform.select({
+				ios: () => require('ComponentIOS'),
+				android: () => require('ComponentAndroid')
+			})();
+			<CustomerComponent />
+
+	3. 检测Android版本: Platform.Version
+		在Android上， Version属性是一个数字，表示Android的api level
+		如：
+			import {Platform} from 'react-native';
+			if (Platform.Version === 25) {
+				console.log('Running on Nougat!');
+			}
+
+	4. 检测 IOS版本
+		在ios上， Version属性是 -[UIDevice systemVersion] 的返回值，一个表示当前系统版本的字符串。如“10.3”
+		如：
+			import {Platform} from 'react-native';
+			const majorVersionIOS = parseInt(Platform.Version, 10);
+			if (majorVersionIOS <= 9 ) {
+				console.log('Runing at ....');
+			}
+
+三、 特定平台扩展名：
+	当不同平台，逻辑代码较为复杂时，最好放到不同文件里，这里需要用特定平台扩展名。
+	RN会检测到某个文件是否具有.ios或是.android的扩展名，然后根据当前运行的平台自动加载对应的文件。
+
+	如：
+		有二个文件：  button.ios.js  和  button.android.js	
+		使用时：
+			import Button from '../button';
+			RN会根据运行平台，自动引入正确对应扩展名的文件
+
+	如果你还希望在 web 端复用 React Native 的代码，那么还可以使用.native.js的扩展名。此时 iOS 和 Android 会使用BigButton.native.js文件，而 web 端会使用BigButton.js。（注意目前官方并没有直接提供 web 端的支持，请在社区搜索第三方方案）。
