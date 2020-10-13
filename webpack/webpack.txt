@@ -8,7 +8,7 @@
 	安装： npm install -g npx
 	npm 5.2版本以上， 开始有npx
 
-	用途：可支行package.json里的script命令，即调用项目内部安装的模块 
+	用途：可运行package.json里的script命令，即调用项目内部安装的模块 
 	如：script里的 node_modules/bin/webpack 
 		在cmd里支行：./node_modules/webpack/bin/webpack 
 		有了npx后： npx webpack 

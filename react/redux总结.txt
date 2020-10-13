@@ -1,0 +1,93 @@
+1. state:
+	就是一个数据，是对象类型。
+	不能直接修改，要通过action来修改
+
+2. action:
+	每一个更改state的动作称为action
+	也是一个对象，用来描述state发生什么更改
+	{"type": ADD_CART, "count": 2 }
+
+3. reducer：
+	根据action,对state进行的操作
+	reducer要返回一个新的state
+	const calculator = (state = initData, action) => {
+		switch(action.type) {
+			case ....
+				return
+		}
+	}
+	
+4. store
+	整个项目保存数据的地方，只能有一个。
+	创建store就是把所有的reducer给它。
+	import {createStore, combineReducers} from 'redux';
+	import {reducer1} from './reducer';
+	// 把所有的reducer，combine在一起
+	const reducers =  combineReducers(reducer1);
+	// 创建全局store
+	export const store = createStore(reducers);
+
+	// 这种创建store的方法，让state有 state.cart  和 state.products二个
+	const rootReducer = combineReducers({
+		cart: cartReducer,
+   		products: productsReducer
+	});
+
+	let store = createStore(
+    	rootReducer,
+    	{
+        	products: productsData // initial store values
+    	}
+	);
+
+5. dispatch:
+	是组件发出action的唯一方法。
+	store.dispatch(addAction)
+	通过store调用addAction，直接把store里的数据修改。
+
+6. <Provider>组件：
+	React-Redux提供<Provider />组件，使你的整个app都能访问到Redux store中的数据
+	store以prop属性给Provider，传递到子组件里
+	<Provider store={store}>
+    	<TodoApp />
+  	</Provider>,
+
+7. connect方法
+	React-Redux 提供了connect方法， 能够把组件和store连接起来。
+	connect方法有二个参数：
+		mapStateToProps： 当store state发生变化时，就被调用。
+							接收整个store state,返回一个该 组件所需要的数据。
+		mapDispatchToProps: 可以是一个函数/对象
+			函数：组件被创建，函数就会被调用，接收dispatch作为一个参数，返回一个能够使用dispatch来分发actions的若干函数组件的对象。
+			对象：是一个action creators构成的对象
+					每一个action creator将会转化为一个prop fucntion ,并会在调用时自动分发actions.
+
+
+8. react组件
+	定义方法一：
+		react组件里， 有render()之外的方法，则：
+
+		import React, { Component } from 'react';
+		import PropTypes from 'prop-types';
+		
+		class Product extends Component {
+			method1 {}
+			method2 {}
+			render()
+		}
+		Product.propTypes = {
+			id:  PropTypes.number.isRequired,
+			...
+		}
+		export default Product
+
+	定义方法二：
+		只有render方法
+		const ProductList = ({ products }) => {
+			render()
+		}
+		ProductList.propTypes = {
+			id:  PropTypes.number.isRequired,
+			...
+		}
+		export default ProductList
