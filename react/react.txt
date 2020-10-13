@@ -1,0 +1,184 @@
+1. 项目创建：
+	npx creat-react-app elema:
+		所有的配置文件， 都是隐藏的， 在node modules下的react-scripts文件夹下
+	cd elema
+	npm run start
+
+
+2. 重新配置项目
+	npm run eject 
+	把隐藏的配置暴露出来， 此命名是不可逆的。
+	所有配置文件， 都会移出到项目根目录下， 即elema下
+
+3. react-app-rewired（有待项目里实践下）
+	网上搜到的， react的插件， 可以不用暴露create-react-app创建的隐藏配置。
+	它不会直接去修改create-react-app的默认配置，而是在create-react-app配置的基础上进行扩展。
+	使用方法：
+	在项目根目录下， 新建一个config-overrides.js
+	module.exports = function override(config, env) {
+		//do stuff with the webpack config...
+		return config;
+	}
+
+	修改package.json的script启动项： "start": "react-app-rewired start",
+
+
+4. render里的<img 路径配置
+	官方说， 要把静态图片， 放到public下， 然后<img src={process.env.PUBLIC_URL +'img.jpg' />
+
+5. css 的处理
+	现在css都是在相应.js里， import './goods.css'， 这样引入的
+	但这样引进来的CSS， 是整个页面的，所以CSS没有限部性， 不像vue， 有<style scoped></style>里的scoped
+
+	网上说， create-react-app里， 已经自带了css module,
+	使用方法：
+	css，命名为： xx.module.css
+	js中引用： import styles from './xx.module.css';
+				<div className={styles.wrap}></div>
+	但没有效果
+
+
+	我自己修改了node modules下的react-scripts下的  config下的webpack.config.dev.js 下的loader
+	{
+        test: /\.css$/,
+        loader: 'style!css?importLoaders=1!postcss'
+    },
+    改为：
+    {
+        test: /\.css$/,
+        // loader: 'style!css?modules
+        loader: 'style!css?modules&localIdentName=[name]__[local]',
+    },
+    就可以了。。。。。
+
+    使用（在相应的JS中）：
+    import styles from './food.module.css';
+    reder()中：
+    <div className={styles['food-content'] + ' ' + styles.title}>
+    如果有全局CSS：
+    <div className={'icon-add_circle ' + styles['cart-add']}></div>
+    但伪类有点问题: 看cartcontrol.js中
+
+6. react中，取本机JSON数据
+	a. 在package.json中， 增加 "proxy": "http://localhost:3000"
+	b. 把.json数据， 放在public文件夹下  public/data/data.json
+	c. 就可以用fetch取数据了
+
+
+7. react中， fecch取数据
+	react中， 官方推荐在 componentDidMount 生命周期里取数据
+	fetch是个异步，需要在数据返回后， 再render
+	我在seller.js 和goods.js中， 用了不同的取数据方法
+
+
+8. 父组件的props， 因为异步，数据更新后， 如何更新子组件里的props
+	方法一： 
+	1. 在子组件里， 把接收到的props存入到state里
+	2. 在子组件的componentDidUpdate通过我给周期里，按prevProps和当前state的比较， 来手动setState一遍。
+
+	componentDidUpdate(prevProps, prevState, snapshot)
+	// https://reactjs.org/docs/react-component.html#componentdidupdate
+	当组件update后， 就会调用些生命周期。 组件update包括了它的props更新， state更新， 都是update, 都会触发这个事件。所以，这个事件里， 一定要加条件判断， 不然很容易死循环
+	
+
+	方法二： refs
+	在父组件， 更新了数据的地方，调用子组件重更新的方法：
+	this.refs.shopCartRef.reRenderShopCart(...)
+
+
+9. 类似vue中的v-if实现
+
+
+
+10. 子组件是个高阶组件，比如使用@connect @withRouter包裹过的组件（其实大部分组件都会被这两个包裹）
+
+
+
+11. redux:
+	使用场景：
+	1. 某个组件的状态，需要共享；
+	2. 某个状态需要在任何地方都可以拿到
+	3. 一个组件需要改变全局状态
+	4. 一个组件需要改变另一个组件的状态
+	有以上的情况，就可以使用redux了
+	Store:  保存数据的地方，是一个容器。 一个应用一个store。
+			import {createStore} from 'redux';
+			const store = createStore(fn);
+
+	State:  想得到某个时点的数据，就要对Store生成快照。这种时点数据集合，叫State。
+			当前时刻的State，可通过store.getState()拿到。
+			一个state对应一个view，
+
+			import {createStore} from 'redux';
+			const store = createStore(fn);
+			const state = store.getState();
+	Action: State的变化必须是View导致的。
+			Action就是view发出的通知， 表示State应该要发生变化了。
+			Action是一个对象，其中type属性是必须的，表示Action的名称，其它属性可以自由设置。
+			const action = {
+				type: 'ADD',
+				payload:'study hard'
+			};
+	Action Creator: View要发送多少种消息，就会有多少种Action。
+			可以定义一个函数来生成Action,这个函数就叫Action Creator。
+			const ADD = 'ADD';
+			function addTodo(text) {
+				return {
+					type: ADD,
+					text
+				}
+			};
+			const action = addTodo('study hard');
+			addTodo就是一个Action Creator。
+	store.dispatch(): 是view发出Action的唯一方法。
+			import {createStore} from 'redux';
+			const store = createStore(fn);
+
+			store.dispatch({
+				type: 'ADD',
+				payload: 'study hard'
+			});
+
+			store.dispatch(addTodo('study hard'));
+
+	Reducer： Store收到Action后， 必须给出一个新的State， 这样view才会发生变化。
+			 这种 state的计算过程，就称为Reducer。
+			 它是一个函数，它接受Action和当前的State作参数，返回一个新的state.
+			 const reducer = function (state, action) {
+			 	...
+			 	return newState;
+			 }
+
+			 实际应用中，Reducer 函数会手动调用，store.dispatch方法会触发 Reducer 的自动执行。
+			 为此，Store 需要知道 Reducer 函数，做法就是在生成 Store 的时候，将 Reducer 传入createStore方法。
+			 import { createStore } from 'redux';
+			 const store = createStore(reducer);
+			 每当store.dispatch发送过来一个新的 Action，就会自动调用 Reducer，得到新的 State。
+
+
+			 Reducer是一个纯函数， 同样的输入，得到同样的输出。同样的State， 定得到同样的View。
+
+
+	store.subscribe(): 设置监听函数， 一旦State发生变化， 就自动执行这个函数。
+						import { createStore } from 'redux';
+						const store = createStore(reducer);
+						store.subscribe(listener);
+
+					  store.subscribe方法返回一个函数，调用这个函数就可以解除监听。
+					  let unsubscribe = store.subscribe(() =>
+  							console.log(store.getState())
+					  );
+					  unsubscribe();
+
+
+
+
+
+
+
+
+
+antd按需加载
+
+
+
