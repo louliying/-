@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>有1至9九个数字</title>
+</head>
+<body>
+	<p>有1至9，九个数字，输出['1,2,3,4,5,6,7,8,9', '12,13,14,15,16....', '123,124,125...', '1234, 1235, 1236....', '12345,12346,12347....', '123456, 123457, 123458....', '1234567, 1234569...']</p>
+	<script>
+		/*function joinNumber(arr, num){
+			// 要返回的，加了“，“号的拼接字符串
+			var str;
+		}
+
+		var arr = [1,2,3,4,5,6,7,8,9];
+		var aRes = [];
+		// aRes.push(arr.join(','));
+		var str = '';
+
+		// 1，2，3, 4, 5, 6, 7, 8, 9 单个拼接
+		for(var i = 0; i < 9; i++) {
+			str += '' + arr[i] + ',';
+		}
+		aRes.push(str);
+
+		// 12，13，, 14, 15, 16, 17, 18, 19 二个数拼接
+		str = '';
+		for(var i = 0; i < 9; i++) {
+			for (var j = i+1; j < 9; j++) {
+				str += '' + arr[i] + '' + arr[j] + ',';
+			}
+		}
+		// console.log('str:', str);
+		aRes.push(str);
+
+		// 123， 134, 125, 126, 127, 128, 129 三个数拼接
+		str = '';
+		for(var i = 0; i < 9; i++) {
+			for (var j = i+1; j < 9; j++) {
+				for (var k = i+2; k < 9; k++) {
+					if (arr[j]!=arr[k]) {
+						str += '' + arr[i] + '' + arr[j] + '' + arr[k] + ',';
+					}					
+				}				
+			}
+		}
+		// console.log('str:', str);
+		aRes.push(str);
+
+		// 1234， 1235, 1236, 1237, 1238, 1239, 四个数拼接
+		str = '';
+		for(var i = 0; i < 9; i++) {
+			for (var j = i+1; j < 9; j++) {
+				for (var k = i+2; k < 9; k++) {
+					for (var n = i + 3; n < 9 ; n++) {
+						if (arr[j] != arr[k] && arr[k] != arr[n]) {
+							str += '' + arr[i] + '' + arr[j] + '' + arr[k] + '' + arr[n] + ',';
+						}
+					}										
+				}				
+			}
+		}
+		// console.log('str:', str);
+		aRes.push(str);
+		console.log(aRes);*/
+
+
+
+		// http://www.2cto.com/kf/201204/126597.html
+		function swap(arr,i,j) { 
+			if(i!=j) { 
+				var temp=arr[i]; 
+				arr[i]=arr[j]; 
+				arr[j]=temp; 
+			} 
+		} 
+		var count=0; 
+		function show(arr) { 
+			document.write("P<sub>"+ ++count+"</sub>: "+arr+"<br />"); 
+		} 
+		function perm(arr) { 
+			(function fn(n) { //为第n个位置选择元素 
+				for(var i=n;i<arr.length;i++) { 
+					swap(arr,i,n); 
+					if(n+1<arr.length-1) //判断数组中剩余的待全排列的元素是否大于1个 
+						fn(n+1); //从第n+1个下标进行全排列 
+					else
+						show(arr); //显示一组结果 
+					swap(arr,i,n); 
+				} 
+			})(0); 
+		} 
+		perm(["e1","e2","e3","e4"]);
+	</script>
+</body>
+</html>
