@@ -1,0 +1,97 @@
+https://v3.vuejs.org/api/application-config.html
+
+一. Vue application global configruations.
+	Vue 就用实例的全局配置
+	可以在mounted前， modify  这个全局configruations.
+	如：
+		const app = Vue.createApp({...});
+		app.config = {			
+			errorHandler: (err, vm, info) => {
+				....
+			},			
+			warnHandler: (msg, vm, trace) => {
+				....
+			},			
+			globalProperties: {
+				$http: () => {....},
+				foo: 'bar'
+			},
+			isCustomElement: (tag) => tag.startWith('icon-'),
+			optionMergeStrategies: {
+				hello: (parent, child, vm) => {
+					return `Hello, ${child}`
+				}
+			}，
+			performance: true
+		}
+	1. errorHandler:
+		app.config.errorHandler = (err, vm, info) => {...}
+		// assign a handler for uncaught errors during component render functions and watchers.
+		// 定义 组件渲染和watch时，未能被捕获的error的处理器
+
+	2. warnHander:
+		app.config.warnHandler = (msg, vm, trace) => {...}
+		// assign a custom handler for runtime Vue warnings.
+		// 定义Vue 运行时的警告处理器， 只在开发环境工作， 生产环境会ignored
+
+	3. globalProperties:
+		app.config.globaProperities: {
+			$http: () => {...},
+			foo: 'bar'
+		}
+		// key value 对象
+		// global property can be accessed in any component instance inside the application.
+		// 定义的globalProperties， 可以在任意组件里使用。
+		// 如果组件内有相同的属性， 则组件内的覆盖全局的。
+
+		
+		3-1. 关于$hppt
+			//  在3里， $https挂在了全局属性里globalProperties
+			// 在2里， $https挂在Vue的原型链上， 才能让new Vue()实例调用到它。
+			/*
+				Vue.prototype.$http = () => {...}
+			*/
+			// globalProperites上属性的使用1：
+			app.$https()...
+
+		3-2. globalProperites的使用：
+			a. 直接在vue实例对象上使用
+				app.$https()...
+
+			b. 在全局自定义组件内使用：				
+				// 自定义全局组件my-component,
+				app.component('my-component', {
+					mounted () {
+						console.log(this.foo);	//bar
+					}
+				})
+
+	4. isCustomElement: tag => tag.startWith('icon-')
+		// a method to recognize custom elements defined outside of Vue.
+		// 一种组件非Vue定义的元素。
+		// 如果组件符合条件， 就不需要本地或全局注册。
+
+	5. optionMergeStartegies:
+		The merge strategy recieves the value of that option defined on the parent and child instances as the first and second arguments.
+
+		使用：
+		app.config.optionMergeStrategies.hello = (parent, child, vm) => {
+			return `Hello, ${child}`;
+		}
+
+		const app = Vue.createApp({
+			mouted() {
+				console.log(this.$option.hello);	// Hello, Vue
+			}
+		});
+
+		app.mixin({
+			hello: 'Vue'
+		});
+
+		这时， 有些没明白 ， parent , child参数是怎么传入的
+		hello明明是个fn， 确实是成了属性值一样被调用 
+
+	6. performance	
+		设置为true后， 在devtool 里， 可以在组件的init, compile, render , patch时，显示performance tracing。
+		

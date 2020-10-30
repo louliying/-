@@ -67,7 +67,7 @@
 
 
 		// http://www.2cto.com/kf/201204/126597.html
-		function swap(arr,i,j) { 
+		/*function swap(arr,i,j) { 
 			if(i!=j) { 
 				var temp=arr[i]; 
 				arr[i]=arr[j]; 
@@ -90,7 +90,24 @@
 				} 
 			})(0); 
 		} 
-		perm(["e1","e2","e3","e4"]);
+		perm(["e1","e2","e3","e4"]);*/
+		
+		// show(aRes);
+
+
+
+		var data = ['1','2','3','4','5'];
+		function getGroup(data, index = 0, group = []) {
+		  var need_apply = new Array();
+		  need_apply.push(data[index]);
+		  for(var i = 0; i < group.length; i++) {
+		    need_apply.push(group[i] + data[index]);
+		  }
+		  group.push.apply(group, need_apply);
+		  if(index + 1 >= data.length) return group;
+		  else return getGroup(data, index + 1, group);
+		}
+		console.log(getGroup(data));
 	</script>
 </body>
 </html>

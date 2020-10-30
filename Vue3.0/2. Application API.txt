@@ -1,0 +1,48 @@
+app上的方法
+一、 createApp()
+	vue实例通过createApp()方法来创建。
+	import {createApp} from 'vue';
+	const app = createApp({});
+
+	它返回vue实例。
+	它提供vue实例的上下文。整个component tree都共享这个上下文。
+	createApp()返回vue实例对象，后面可以链式调用。
+
+2. component():	
+	入参： string组件名，
+			fn: 传入组件的definition
+	返回： 	如果有definition, 则返回vue实例对像
+			如果没有definition,则返回 component
+	用途：	注册全局组件
+	import {createApp} from 'vue';
+	const app = createApp({});
+	app.component('customComponent', {
+		....
+	})
+
+3. config()
+
+4. directive()
+	入参： string指令名
+			fn|obj 的definition
+	返回： 如果有definition，返回 vue实例
+		   如果没有definition, 返回directive
+	用途： 注册或重新取得全局directive
+
+	import {createApp} from 'vue';
+	const app = createApp();
+
+	app.directive('custom-directive', {
+		// directive的一系列 lifecycle hooks
+		beforeMount() {},
+		mounted () {},
+		beforeUpdate () {},
+		update () {},
+		beforeUnmount() {},
+		unmounted () {}
+	});
+
+	app.directive('custom-directive', () => {
+		// 会在moounted, updated的时候，被调用
+		...
+	})
