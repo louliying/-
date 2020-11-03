@@ -1,0 +1,130 @@
+https://segmentfault.com/a/1190000002658374
+
+1. react natvie 宽度基于pt单位， 可以通过Dimensions来获取宽高， PixelRatio获取密度。
+	var Dimensions = require('Dimensions');
+
+	var width = Dimensions.get('window').width;		// iPhone6中是  375,这里是pt单位
+	var height = Dimensions.get('window').height;	// iPhone6中是  667,这里是pt单位
+
+	var image = getImage({
+		width: width * PixelRatio.get(),
+		height: height * PixelRatio.get(),
+	});
+	// pt * pixelRatio = px
+	<Image source={image} style={} />
+
+2. 基于flex的布局
+	a. view默认宽度是100%
+	b. 水平居中用alignItems, 垂直居中用justifyContent
+		要看flex-direction
+		<Text>水平垂直居中</Text>
+		<View style={{
+			height: 100,
+			backgroundColor: '#333',
+			alignItems: 'center',
+			justifyContent: 'center'
+		}}>
+			<View style={{
+				backgroundColor: '#fefefe',
+				width: 30,
+				height: 30,
+				borderRadius: 15
+			}}>
+			</View>
+		</View>
+	c. 基于flex能够实现 现有的网格系统需求，且网格能够各种嵌套无bug
+		如：一行三列， 左边固定， 右边固定，中间flex的布局
+		<View style={styles.flexContainer}>
+			<View style={styles.cellfixed}>
+				<Text>Left Fixed</Text>
+			</View>
+
+			<View style={styles.cell}>
+				<Text>Middle unfixed</Text>
+			</View>
+
+			<View style={styles.cellfixed}>
+				<Text>Right Fixed</Text>
+			</View>
+		</View>
+
+		const styles = {
+			flexContainer: {
+				// 容器上添加 direction才能让子元素flex
+				flexDirection: 'row'
+			},
+			// 中间不固定宽度
+			cell: {
+				flex: 1,
+				height: 50,
+				backgroundColor: '#aaa'
+			},
+			// 左右二边的，指定了固定宽度
+			cellfixed: {
+				height: 50,
+				width: 80,
+				backgroundColor: '#efefef'
+			}
+		}
+
+3. 图片布局 cover, contain, stretch
+	a. 通过Image.resizeMode来适配图片布局， 包括contain cover, stretch
+		<View style={[{flex: 1, backgroundColor: 'red'}]}>
+			<Image style={{
+					flex:1, 
+					height: 100, 
+					// contain模式，让容器完全容纳图片， 而图片在容器内自适应宽高了
+					resizeMode: Image.resizeMode.contain
+					// cover模式， 图片100高度和全屏宽度，图片居中没有拉伸，但被截断了
+					resizeMode: Image.resizeMode.cover
+					// streth 模式，图片被拉伸，适应屏幕
+					resizeMode: Image.resizeMode.stretch
+
+				}}
+				source={{uri: ....}}
+			/>
+		</View>
+	b. 默认不设置模式等于cover
+	c. contain模式自适应宽高， 给出高度值即可
+	d. cover铺满容器，但是会做截断
+	e. stretch铺满容器， 但会拉伸
+		
+4. 定位
+	a. 定位相对于父元素，父元素不用设置position也行
+
+5. padding, marging
+	a. padding 设置在View上很顺利， 但paddingTop, paddingBottom 在inline元素上，补挤成了marginBottom。
+	b. 对于 inline元素 marginLeft, marginRight是生效的， 但marginTop, marginBottom在Text 元素是生效的。。。。
+		所以Text 好像是一个不能使用padding的 block元素一样。
+
+		Text 元素在Text里，可看成为inline， 但如果单独在View里，就可以看成是block元素。
+
+6. 文本元素
+	a. 文字必须放在Text元素里
+	b. Text元素可以相互嵌套， 且存在样式继承关系
+		RN中，没有样式继承这种说法。
+		Text继承的父Text的，而不是最外层Text的。
+	c. numberOfLines 需要放在最外层的Text元素上， 且虽然截取了文字，但还是会占用空间
+
+	Text支持的style:
+		Attributes.style = {
+			color 	string
+			containerBackgroundColor 	string
+			fontFamily		string
+			fontSize		number
+			fontStyle		enum('normal', 'italic')
+			fontWeight		enum('normal', 'bold', '100', '200'...'900')
+			lineHeight		number
+			textAlign		enum('auto', 'left', 'right', 'center')
+			writingDirection	enum('auto', 'ltr', 'rtl')
+		}
+	Text 嵌套
+		<View style={{background: '#333', padding: 10}}>
+			<Text numberOflines={5}>
+				<Text>文本元素{'\n'}</Text>
+				<Text>{'\n'}....一堆长文。。。。。</Text>
+			</Text>
+		</View>
+		// numberOflines={5} 要放在最外层的Text上
+		// numberOflines={5}  把超出的文字截取了，但最外层的Text的高度却仍是在的，虽然字没了	
+
