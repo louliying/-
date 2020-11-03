@@ -32,17 +32,27 @@ app上的方法
 	import {createApp} from 'vue';
 	const app = createApp();
 
-	app.directive('custom-directive', {
-		// directive的一系列 lifecycle hooks
-		beforeMount() {},
-		mounted () {},
-		beforeUpdate () {},
-		update () {},
-		beforeUnmount() {},
-		unmounted () {}
-	});
+	4-1. 自定义指令
+		1. 定义自定义指令的一系列生命周期： 方法一， 用obj
+			app.directive('custom-directive', {
+				// directive的一系列 lifecycle hooks
+				beforeMount() {},
+				mounted () {},
+				beforeUpdate () {},
+				update () {},
+				beforeUnmount() {},
+				unmounted () {}
+			});
 
-	app.directive('custom-directive', () => {
-		// 会在moounted, updated的时候，被调用
-		...
-	})
+		2. 定义指令的一系列生命周期： 方法二， 用fn
+			app.directive('custom-directive', () => {
+				// 会在mounted, updated的时候，被调用
+				...
+			});
+
+		3. 使用自定义指令
+			const myDirective = app.directive('custom-directive');
+
+	4-2. 在使用自定义directive时， 可传入以下参数
+		1. el
+		2. 
